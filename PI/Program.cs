@@ -3,247 +3,287 @@ using System.IO.Ports;
 using System.Net;
 using System.Text;
 using System.Text.Json;
-
+using System.Globalization;
+using System.Threading.Tasks;
 class Program
 {
-// Altere para a COM do seu STM32
+    // CONFIGURAÇÕES
+    // STM32
     static string portaCom = "COM3";
-
-    // Velocidade configurada no STM32
     static int baudRate = 115200;
-
-    // Resistência mínima e máxima do trimpot
+    // Resistência do trimpot
     static double resistenciaMin = 0;
     static double resistenciaMax = 4000;
-
-    // Endereço da API Python da IA
+    // Capacidade máxima do reservatório
+    // ALTERE PARA A CAPACIDADE REAL DO SEU RESERVATÓRIO
+    static double capacidadeMaxLitros = 100;
+    // API da IA Python
     static string urlIA = "http://127.0.0.1:5000/prever";
-
+    // Servidor que entrega os dados para o SEU JavaScript
+    static string urlServidor = "http://localhost:8080/";
+    // Porta serial
     static SerialPort porta;
 
-    // Último resultado recebido pela IA
-    static string ultimoNivel = "Aguardando";
+    // DADOS ATUAIS
 
-    // Último valor em porcentagem
-    static double ultimoNivelAgua = 0;
-
-    // Última resistência recebida
     static double ultimaResistencia = 0;
+    static double ultimoNivelLitros = 0;
+    static double ultimoNivelPorcentagem = 0;
+    static string ultimaClassificacao = "Aguardando";
 
+    // MAIN
     static void Main()
     {
+        Console.WriteLine("======================================");
         Console.WriteLine(" SISTEMA DE MONITORAMENTO DE ÁGUA");
+        Console.WriteLine("======================================");
         Console.WriteLine();
+        // Configura STM32
+        ConfigurarComunicacaoSTM32();
+        // Conecta ao STM32
+        if (!ConectarSTM32())
+        {
+            return;
+        }
+        // Inicia comunicação com o seu JS
+        IniciarServidorParaJS();
 
-        // Cria a porta serial
-        porta = new SerialPort(portaCom,baudRate,Parity.None,8,StopBits.One);
+        Console.WriteLine();
+        Console.WriteLine("Sistema iniciado.");
+        Console.WriteLine("Aguardando dados do STM32...");
+        Console.WriteLine();
+        // Mantém o programa aberto
+        Console.ReadLine();
+    }
 
-        // Evento chamado quando o STM32 enviar dados
-        porta.DataReceived += ReceberDadosSTM32;
+    // 1. STM32 → C#
 
+    static void ConfigurarComunicacaoSTM32()
+{
+    porta = new SerialPort(
+        portaCom,
+        baudRate,
+        Parity.None,
+        8,
+        StopBits.One
+    );
+
+    // Quando chegar um dado do STM32
+    porta.DataReceived += ReceberDadosSTM32;
+}
+
+    static bool ConectarSTM32()
+    {
         try
         {
-            // Abre comunicação com STM32
             porta.Open();
-
             Console.WriteLine("STM32 conectado.");
-            Console.WriteLine("Porta: " + portaCom);
+            Console.WriteLine("COM: " + portaCom);
             Console.WriteLine("Baud Rate: " + baudRate);
-            Console.WriteLine();
-            Console.WriteLine("Aguardando dados...");
-            Console.WriteLine();
-
-            // Mantém o programa funcionando
-            IniciarServidor();
-            Console.ReadLine();
+            return true;
         }
         catch (Exception ex)
         {
             Console.WriteLine("Erro ao conectar ao STM32:");
             Console.WriteLine(ex.Message);
+            return false;
         }
     }
 
-    // RECEBE DADOS DO STM32
-    
-    static async void ReceberDadosSTM32(object sender, SerialDataReceivedEventArgs e)
+    // 2. RECEBER DADO DO STM32
+
+    static async void ReceberDadosSTM32(object sender,SerialDataReceivedEventArgs e)
     {
         try
         {
-            // Lê uma linha enviada pelo STM32
+            // O STM32 deve enviar uma resistência por linha
             string dados = porta.ReadLine().Trim();
-
             Console.WriteLine("Recebido do STM32: " + dados);
 
-            // Tenta transformar o texto em número
-            if (double.TryParse(dados,System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture,out double resistencia))
+            // Converte o texto recebido para número
+            if (double.TryParse(dados,NumberStyles.Any,CultureInfo.InvariantCulture,out double resistencia))
             {
-                // Guarda resistência
-                ultimaResistencia = resistencia;
-                // Converte resistência para nível de água
-                double nivelAgua = ConverterParaPorcentagem(resistencia);
-                // Guarda nível
-                ultimoNivelAgua = nivelAgua;
-                Console.WriteLine($"Resistência: {resistencia:F2} Ω");
-                Console.WriteLine($"Nível da água: {nivelAgua:F1}%");
-                // Envia para a IA
-                await EnviarParaIA(nivelAgua);
-                Console.WriteLine();
+                await ProcessarResistencia(resistencia);
             }
             else
             {
-                Console.WriteLine(
-                    "Valor recebido não é numérico."
-                );
+                Console.WriteLine("O valor recebido não é uma resistência válida.");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine(
-                "Erro ao receber dados: " + ex.Message
-            );
+            Console.WriteLine("Erro ao receber dados do STM32:");
+            Console.WriteLine(ex.Message);
         }
     }
-    // CONVERSÃO RESISTÊNCIA → PORCENTAGEM
-    static double ConverterParaPorcentagem(double resistencia)
+
+    // 3. PROCESSAR RESISTÊNCIA
+  
+    static async Task ProcessarResistencia(double resistencia)
     {
-        // Impede valores abaixo do mínimo
+        // Guarda resistência
+        ultimaResistencia = resistencia;
+        Console.WriteLine($"Resistência: {resistencia:F2} Ω");
+        // Ω → Litros
+        double litros = ConverterOhmsParaLitros(resistencia);
+        // Litros → %
+        double porcentagem = ConverterLitrosParaPorcentagem(litros);
+
+        // Guarda valores
+        ultimoNivelLitros = litros;
+        ultimoNivelPorcentagem = porcentagem;
+        Console.WriteLine($"Água: {litros:F2} L");
+        Console.WriteLine($"Nível: {porcentagem:F1}%");
+
+        // Cria JSON para IA
+        string json = CriarJsonIA(resistencia, litros, porcentagem);
+        Console.WriteLine("JSON enviado para IA:");
+        Console.WriteLine(json);
+        // C# → IA
+        await EnviarParaIA(json);
+    }
+
+    // 4. Ω → LITROS
+    static double ConverterOhmsParaLitros(
+        double resistencia)
+    {
+        // Limita resistência mínima
         if (resistencia < resistenciaMin)
         {
             resistencia = resistenciaMin;
         }
-        // Impede valores acima do máximo
+        // Limita resistência máxima
         if (resistencia > resistenciaMax)
         {
             resistencia = resistenciaMax;
         }
-        // Converte 0–4000 Ω para 0–100%
-        double nivel =
-            ((resistencia - resistenciaMin) /
-            (resistenciaMax - resistenciaMin)) * 100;
+        // Conversão proporcional
+        double litros =((resistencia - resistenciaMin) /(resistenciaMax - resistenciaMin))* capacidadeMaxLitros;return Math.Round(litros, 2);}
 
-        return Math.Round(nivel, 1);
+    // 5. LITROS → PORCENTAGEM
+    static double ConverterLitrosParaPorcentagem(double litros)
+    {
+        if (litros < 0)
+        {
+            litros = 0;
+        }
+
+        if (litros > capacidadeMaxLitros)
+        {
+            litros = capacidadeMaxLitros;
+        }
+        double porcentagem = (litros / capacidadeMaxLitros) * 100;
+
+        return Math.Round(porcentagem, 1);
     }
-    // ENVIA JSON PARA A IA
-    static async System.Threading.Tasks.Task EnviarParaIA(
-        double nivelAgua)
+
+    // 6. CRIAR JSON PARA IA
+    static string CriarJsonIA(double resistencia, double litros, double porcentagem)
+    {
+        var dados = new
+        {
+            resistencia = resistencia, litros = litros, nivel = porcentagem
+        };
+        return JsonSerializer.Serialize(dados);
+    }
+
+    // 7. C# → IA
+    static async Task EnviarParaIA(string json)
     {
         try
         {
-            // Monta o JSON
-            var dados = new { nivel = nivelAgua };
-
-            string json = JsonSerializer.Serialize(dados);
-            Console.WriteLine("JSON enviado para IA:");
-            Console.WriteLine(json);
             using HttpClient cliente = new HttpClient();
-
-            // Define o conteúdo
             StringContent conteudo = new StringContent(json,Encoding.UTF8,"application/json");
-            // Envia POST para a API Python
-            HttpResponseMessage resposta =
-                await cliente.PostAsync(urlIA,conteudo);
+            HttpResponseMessage resposta = await cliente.PostAsync(urlIA,conteudo);
 
             // Verifica se a API respondeu corretamente
             if (resposta.IsSuccessStatusCode)
             {
-                // Lê resposta da IA
                 string resultado = await resposta.Content.ReadAsStringAsync();
-                Console.WriteLine("Resposta da IA:");
-                Console.WriteLine(resultado);
+                Console.WriteLine("Resposta da IA: "+ resultado);
                 ProcessarRespostaIA(resultado);
             }
             else
             {
-                Console.WriteLine( "Erro na API da IA: " + resposta.StatusCode);
+                Console.WriteLine("Erro na IA: "+ resposta.StatusCode);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine(
-                "Erro ao enviar para IA: " +
-                ex.Message
-            );
+            Console.WriteLine("Erro ao enviar para IA:");
+            Console.WriteLine(ex.Message);
         }
     }
-    // PROCESSA RESPOSTA DA IA
-    static void ProcessarRespostaIA(string json)
+
+    // 8. IA → C#
+    static void ProcessarRespostaIA(
+        string json)
     {
         try
         {
-            using JsonDocument documento = JsonDocument.Parse(json);
-            JsonElement raiz =documento.RootElement;
-            // Esperamos que a IA responda:
-            //     "nivel": 65,
-            //     "classificacao": "Médio"
-
-            if (raiz.TryGetProperty(
-                "classificacao",out JsonElement classificacao))
+            using JsonDocument documento =JsonDocument.Parse(json);
+            JsonElement raiz = documento.RootElement;
+            // Pega a classificação retornada pela IA
+            if (raiz.TryGetProperty("classificacao",out JsonElement classificacao))
             {
-                ultimoNivel =classificacao.GetString() ?? "Desconhecido";
-                Console.WriteLine("Classificação da IA: " +ultimoNivel
-                );
+                ultimaClassificacao =classificacao.GetString()?? "Desconhecido";
+                Console.WriteLine("Classificação: "+ ultimaClassificacao);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            Console.WriteLine( "Não foi possível interpretar a resposta da IA." );
+            Console.WriteLine("Erro ao interpretar resposta da IA:");
+            Console.WriteLine(ex.Message);
         }
     }
-    // SERVIDOR PARA O SITE
-    static void IniciarServidor()
+    // 9. C# → SEU JAVASCRIPT
+    static void IniciarServidorParaJS()
     {
         HttpListener servidor = new HttpListener();
-        servidor.Prefixes.Add("http://localhost:8080/");
+        servidor.Prefixes.Add(urlServidor);
 
         try
         {
             servidor.Start();
-            Console.WriteLine("Servidor C# iniciado:");
-            Console.WriteLine("http://localhost:8080/");
+            Console.WriteLine();
+            Console.WriteLine("Comunicação com o JavaScript iniciada.");
 
-            System.Threading.Tasks.Task.Run(
-                async () =>
+            Console.WriteLine("Endpoint: http://localhost:8080/api/agua");
+            Task.Run(async () =>
+            {
+                while (true)
                 {
-                    while (true)
-                    {
-                        HttpListenerContext contexto =await servidor.GetContextAsync();
-                        ProcessarRequisicaoSite(contexto);
-                    }
+                    HttpListenerContext contexto =await servidor.GetContextAsync();
+                    ResponderAoJavaScript(contexto);
                 }
-            );
+            });
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Erro ao iniciar servidor:" );
+            Console.WriteLine("Erro na comunicação com o JavaScript:");
             Console.WriteLine(ex.Message);
         }
     }
-    // RESPONDE AO SITE
-    static void ProcessarRequisicaoSite(
+
+    // 10. ENVIAR JSON PARA O SEU JS
+    static void ResponderAoJavaScript(
         HttpListenerContext contexto)
     {
         try
         {
-            string caminho =contexto.Request.Url?.AbsolutePath ?? "/";
+            string caminho =contexto.Request.Url?.AbsolutePath?? "/";
+            // Seu JS fará uma requisição para:
+            // http://localhost:8080/api/agua
 
             if (caminho == "/api/agua")
             {
-                // JSON que será enviado para o site
-                var resposta = new
-                {
-                    resistencia = ultimaResistencia,
-                    nivel = ultimoNivelAgua,
-                    classificacao = ultimoNivel
-                };
+                string json =CriarJsonParaSite();
+                byte[] dados =Encoding.UTF8.GetBytes(json);
 
-                string json = JsonSerializer.Serialize(resposta);
-                byte[] buffer =Encoding.UTF8.GetBytes(json);
                 contexto.Response.ContentType ="application/json";
-                contexto.Response.Headers.Add("Access-Control-Allow-Origin","*" );
-                contexto.Response.ContentLength64 =buffer.Length;
-                contexto.Response.OutputStream.Write(buffer,0,buffer.Length);
+                contexto.Response.Headers.Add("Access-Control-Allow-Origin","*");
+                contexto.Response.ContentLength64 =dados.Length;
+                contexto.Response.OutputStream.Write(dados,0,dados.Length);
                 contexto.Response.OutputStream.Close();
             }
             else
@@ -254,9 +294,21 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Erro ao responder ao site: " +ex.Message);
+            Console.WriteLine("Erro ao enviar dados para o JS:");
+            Console.WriteLine(ex.Message);
             contexto.Response.StatusCode = 500;
             contexto.Response.Close();
         }
+    }
+
+    // 11. JSON QUE O SEU JS RECEBE
+    static string CriarJsonParaSite()
+    {
+        var dados = new
+        {
+            resistencia = ultimaResistencia, litros = ultimoNivelLitros, nivel = ultimoNivelPorcentagem, classificacao = ultimaClassificacao
+        };
+
+        return JsonSerializer.Serialize(dados);
     }
 }

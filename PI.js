@@ -1,10 +1,9 @@
-```javascript
 const express = require('express');
 const app = express();
 app.use(express.json());
 
 // DADOS ATUAIS DA ÁGUA
-let dadosAgua = {nivel: 0,classificacao: "Aguardando" horario: null};
+let dadosAgua = {nivel: 0,classificacao: "Aguardando", horario: null};
 // HOME
 app.get('/home', (req, res) => {
     res.send(`
@@ -23,10 +22,7 @@ app.post('/login', (req, res) => {
     if (email && senha) {
         return res.json({sucesso: true,mensagem: "Login recebido"});
     }
-    res.status(400).json({
-        sucesso: false,
-        mensagem: "Email e senha são obrigatórios"
-    });
+    res.status(400).json({sucesso: false,mensagem: "Email e senha são obrigatórios"});
 });
 
 // RECEBER RESULTADO DA IA
@@ -56,4 +52,3 @@ app.listen(3000, () => {
     console.log('API:  http://localhost:3000/api/agua');
     console.log('');
 });
-```
