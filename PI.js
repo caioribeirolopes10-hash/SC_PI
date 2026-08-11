@@ -1,15 +1,21 @@
 const express = require('express');
+const path = require('path');
+
 const app = express();
+
+app.use(express.json());
+
+// HOME
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'PI.html'));
+});
 app.use(express.json());
 
 // DADOS ATUAIS DA ÁGUA
 let dadosAgua = {nivel: 0,classificacao: "Aguardando", horario: null};
 // HOME
-app.get('/home', (req, res) => {
-    res.send(`
-        <h1>Servidor do Monitoramento da Água</h1>
-        <p>Servidor funcionando normalmente.</p>
-`);
+app.get('/', (req, res) => {
+    res.send(`<h1>Servidor do Monitoramento da Água</h1><p>Servidor funcionando normalmente.</p>`);
 });
 
 // LOGIN

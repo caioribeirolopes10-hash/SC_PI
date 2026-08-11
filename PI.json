@@ -1,0 +1,8 @@
+{
+  "sensor": "trimpot",
+  "valor_adc": 0,
+  "nivel_agua": 0.0,
+  "classificacao": "baixo",
+  "resultado_ia": "baixo",
+  "acuracia": 0.0
+}
