@@ -462,6 +462,155 @@
             font-size: 12px;
         }
 
+
+        /* =========================
+           SIMULADOR DE TANQUE
+        ========================= */
+
+        .tank-simulator {
+            margin-top: 25px;
+            background: rgba(13, 28, 47, 0.78);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 22px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+            backdrop-filter: blur(15px);
+        }
+
+        .tank-header {
+            margin-bottom: 25px;
+        }
+
+        .tank-header h3 {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        .tank-header p {
+            color: #8297ac;
+            font-size: 13px;
+        }
+
+        .tank-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 45px;
+            min-height: 380px;
+        }
+
+        .tank {
+            position: relative;
+            width: 190px;
+            height: 320px;
+            border: 4px solid rgba(174, 225, 255, 0.65);
+            border-top: 7px solid rgba(174, 225, 255, 0.75);
+            border-radius: 18px 18px 28px 28px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.035);
+            box-shadow:
+                inset 0 0 30px rgba(0,0,0,0.25),
+                0 0 35px rgba(0,174,255,0.10);
+        }
+
+        .tank-water {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(
+                to top,
+                rgba(0, 102, 255, 0.88),
+                rgba(0, 191, 255, 0.68)
+            );
+            transition: height 1s ease;
+            box-shadow: inset 0 10px 25px rgba(120,230,255,0.18);
+        }
+
+        .tank-water::before {
+            content: "";
+            position: absolute;
+            top: -8px;
+            left: -10%;
+            width: 120%;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(110, 220, 255, 0.45);
+            animation: waterWave 2.5s ease-in-out infinite;
+        }
+
+        .tank-glass {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0.10),
+                transparent 22%,
+                transparent 78%,
+                rgba(255,255,255,0.04)
+            );
+        }
+
+        .tank-scale {
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #7890a6;
+            font-size: 12px;
+        }
+
+        .tank-info {
+            min-width: 230px;
+        }
+
+        .tank-percent {
+            font-size: 52px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ffffff, #6edcff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tank-state {
+            margin-top: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #5edcff;
+        }
+
+        .tank-measure {
+            margin-top: 12px;
+            color: #71879c;
+            font-size: 13px;
+        }
+
+        @keyframes waterWave {
+            0%, 100% {
+                transform: translateX(-3%);
+            }
+            50% {
+                transform: translateX(3%);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .tank-area {
+                flex-direction: column;
+                gap: 25px;
+            }
+
+            .tank-info {
+                text-align: center;
+            }
+
+            .tank-scale {
+                display: none;
+            }
+        }
+
         /* =========================
            RESPONSIVO
         ========================= */
@@ -732,6 +881,40 @@
 
         </main>
 
+        <!-- SIMULADOR DE TANQUE -->
+        <section class="tank-simulator">
+
+            <div class="tank-header">
+                <h3>Simulador do Tanque</h3>
+                <p>Visualização do nível da água conforme as medições recebidas.</p>
+            </div>
+
+            <div class="tank-area">
+
+                <div class="tank-scale">
+                    <span>100%</span>
+                    <span>75%</span>
+                    <span>50%</span>
+                    <span>25%</span>
+                    <span>0%</span>
+                </div>
+
+                <div class="tank">
+                    <div class="tank-water" id="tankWater"></div>
+                    <div class="tank-glass"></div>
+                </div>
+
+                <div class="tank-info">
+                    <div class="tank-percent" id="tankPercent">0%</div>
+                    <div class="tank-state" id="tankState">Vazio</div>
+                    <div class="tank-measure">
+                        Nível atual recebido pelo sistema
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
 
         <footer>
 
@@ -765,6 +948,15 @@
         const statusSistema =
             document.getElementById("statusSistema");
 
+        const tankWater =
+            document.getElementById("tankWater");
+
+        const tankPercent =
+            document.getElementById("tankPercent");
+
+        const tankState =
+            document.getElementById("tankState");
+
 
         async function atualizarDados() {
 
@@ -796,6 +988,34 @@
 
                 nivelElemento.textContent =
                     nivel.toFixed(0);
+
+
+                // SIMULADOR DE TANQUE
+
+                const nivelTanque =
+                    Math.min(Math.max(nivel, 0), 100);
+
+                tankWater.style.height =
+                    nivelTanque + "%";
+
+                tankPercent.textContent =
+                    nivelTanque.toFixed(0) + "%";
+
+                if (nivelTanque <= 0) {
+                    tankState.textContent = "Vazio";
+                }
+                else if (nivelTanque < 40) {
+                    tankState.textContent = "Baixo";
+                }
+                else if (nivelTanque < 70) {
+                    tankState.textContent = "Normal";
+                }
+                else if (nivelTanque < 100) {
+                    tankState.textContent = "Alto";
+                }
+                else {
+                    tankState.textContent = "Cheio";
+                }
 
 
                 // CÍRCULO
