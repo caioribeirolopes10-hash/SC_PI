@@ -20,7 +20,7 @@ class Program
     // API da IA Python
     static string urlIA = "http://127.0.0.1:5000/prever";
     // Servidor que entrega os dados para o SEU JavaScript
-    static string urlServidor = "http://localhost:8080/";
+    static string urlServidor = "http://localhost:3000";
     // Porta serial
     static SerialPort porta;
 
@@ -248,7 +248,7 @@ class Program
             Console.WriteLine();
             Console.WriteLine("Comunicação com o JavaScript iniciada.");
 
-            Console.WriteLine("Endpoint: http://localhost:8080/api/agua");
+            Console.WriteLine("Endpoint: http://localhost:3000/api/agua");
             Task.Run(async () =>
             {
                 while (true)
@@ -273,7 +273,7 @@ class Program
         {
             string caminho =contexto.Request.Url?.AbsolutePath?? "/";
             // Seu JS fará uma requisição para:
-            // http://localhost:8080/api/agua
+            // http://localhost:3000/api/agua
 
             if (caminho == "/api/agua")
             {
