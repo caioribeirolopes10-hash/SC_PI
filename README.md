@@ -1,5 +1,5 @@
 INTEGRANTES: CAIO LOPES E EVELYN DANDARAH.
-LINK DO VÍDEO: 
+LINK DO VÍDEO: teste
 
 Este projeto foi desenvolvido como parte do **Projeto Integrado**, com o objetivo de desenvolver um sistema completo de **aquisição, processamento, classificação e visualização de dados**.
 
