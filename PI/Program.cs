@@ -13,7 +13,7 @@ class Program
     static int baudRate = 115200;
     // Resistência do trimpot
     static double resistenciaMin = 0;
-    static double resistenciaMax = 4000;
+    static double resistenciaMax    = 4000;
     // Capacidade máxima do reservatório
     // ALTERE PARA A CAPACIDADE REAL DO SEU RESERVATÓRIO
     static double capacidadeMaxLitros = 100;
