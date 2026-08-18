@@ -1718,23 +1718,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\caior\\.nuget\\packages\\": {},
+    "C:\\Users\\Evely\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\caior\\OneDrive\\Desktop\\SC_PI\\PI\\PI.csproj",
+      "projectUniqueName": "C:\\Users\\Evely\\SC_PI\\PI\\PI.csproj",
       "projectName": "PI",
-      "projectPath": "C:\\Users\\caior\\OneDrive\\Desktop\\SC_PI\\PI\\PI.csproj",
-      "packagesPath": "C:\\Users\\caior\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\caior\\OneDrive\\Desktop\\SC_PI\\PI\\obj\\",
+      "projectPath": "C:\\Users\\Evely\\SC_PI\\PI\\PI.csproj",
+      "packagesPath": "C:\\Users\\Evely\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Evely\\SC_PI\\PI\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\caior\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Evely\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -1786,19 +1786,19 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[9.0.12, 9.0.12]"
+            "version": "[9.0.14, 9.0.14]"
           },
           {
             "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[9.0.12, 9.0.12]"
+            "version": "[9.0.14, 9.0.14]"
           },
           {
             "name": "Microsoft.NETCore.App.Ref",
-            "version": "[9.0.12, 9.0.12]"
+            "version": "[9.0.14, 9.0.14]"
           },
           {
             "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[9.0.12, 9.0.12]"
+            "version": "[9.0.14, 9.0.14]"
           }
         ],
         "frameworkReferences": {
@@ -1806,7 +1806,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.200-preview.0.26103.119/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
