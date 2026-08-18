@@ -30,7 +30,6 @@ class Program
     static double ultimoNivelPorcentagem = 0;
     static string ultimaClassificacao = "Aguardando";
 
-    // MAIN
     static void Main()
     {
         Console.WriteLine("======================================");
