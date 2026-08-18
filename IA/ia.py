@@ -67,7 +67,11 @@ def prever():
         probabilities = {label: float(p)for label, p in zip(knn.classes_, proba)}
 
         # Retorna o resultado para o C#
-        return jsonify({"nivel": nivel,"classification": prediction,"probabilities": probabilities})
+        return jsonify({
+            "nivel": nivel,
+            "classificacao": prediction,
+            "probabilidades": probabilities
+        })
     except ValueError:
 
         return jsonify({"error": "O nível precisa ser numérico"}), 400

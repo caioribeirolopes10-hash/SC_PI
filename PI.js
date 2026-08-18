@@ -2,21 +2,21 @@ const express = require('express');
 const path = require('path');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-// HOME
+// Entrega a interface web pelo mesmo servidor da API.
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'PI.html'));
 });
-app.use(express.json());
 
-// DADOS ATUAIS DA ÁGUA
-let dadosAgua = {nivel: 0,classificacao: "Aguardando", horario: null};
-// HOME
-app.get('/', (req, res) => {
-    res.send(`<h1>Servidor do Monitoramento da Água</h1><p>Servidor funcionando normalmente.</p>`);
-});
+// Último resultado recebido do C#.
+let dadosAgua = {
+    nivel: 0,
+    classificacao: "Aguardando",
+    horario: null
+};
 
 // LOGIN
 app.post('/login', (req, res) => {
@@ -31,83 +31,44 @@ app.post('/login', (req, res) => {
     res.status(400).json({sucesso: false,mensagem: "Email e senha são obrigatórios"});
 });
 
-// RECEBER RESULTADO DA IA
-app.post('/api/agua', async (req, res) => {
-    const { nivel } = req.body;
+// Recebe do C# o nível e a classificação retornada pela IA.
+app.post('/api/agua', (req, res) => {
+    const { nivel, classificacao } = req.body;
 
-    if (nivel === undefined) {
-        return res.status(400).json({ erro: "Nivel não informado" });
+    if (nivel === undefined || !classificacao) {
+        return res.status(400).json({ erro: "Dados incompletos" });
     }
 
-    try {
+    const nivelNumerico = Number(nivel);
 
-        // CHAMAR A IA AUTOMATICAMENTE
-        const respostaIA = await fetch('http://127.0.0.1:5000/prever', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                nivel: Number(nivel)
-            })
-        });
-
-        if (!respostaIA.ok) {
-            throw new Error(`Erro na IA: ${respostaIA.status}`);
-        }
-
-        const resultadoIA = await respostaIA.json();
-
-        console.log("Resposta da IA:");
-        console.log(resultadoIA);
-
-        // PEGAR CLASSIFICAÇÃO DA IA
-        const classificacao = resultadoIA.classificacao;
-
-        if (!classificacao) {
-            return res.status(500).json({
-                erro: "A IA não retornou uma classificação"
-            });
-        }
-
-        // SALVAR DADOS
-        dadosAgua = {
-            nivel: Number(nivel),
-            classificacao: classificacao,
-            horario: new Date().toLocaleTimeString('pt-BR')
-        };
-
-        console.log("Novo resultado da IA:");
-        console.log(dadosAgua);
-
-        // RESPONDER
-        res.json({
-            sucesso: true,
-            mensagem: "Dados recebidos e classificados pela IA",
-            dados: dadosAgua
-        });
-
-    } catch (erro) {
-
-        console.error("Erro ao chamar a IA:", erro.message);
-
-        res.status(500).json({
-            erro: "Não foi possível consultar a IA",
-            detalhes: erro.message
-        });
+    if (!Number.isFinite(nivelNumerico)) {
+        return res.status(400).json({ erro: "O nível precisa ser numérico" });
     }
+
+    dadosAgua = {
+        nivel: nivelNumerico,
+        classificacao: String(classificacao),
+        horario: new Date().toLocaleTimeString('pt-BR')
+    };
+
+    console.log("Novo resultado da IA:");
+    console.log(dadosAgua);
+
+    res.json({
+        sucesso: true,
+        mensagem: "Dados recebidos",
+        dados: dadosAgua
+    });
 });
-
-// ENVIAR DADOS PARA O HTML
+// Disponibiliza o último resultado para o HTML.
 app.get('/api/agua', (req, res) => {
     res.json(dadosAgua);
 });
 
-// SERVIDOR
-app.listen(3000, () => {
+app.listen(PORT, () => {
     console.log('');
     console.log('Servidor iniciado');
-    console.log('Site: http://localhost:3000');
-    console.log('API:  http://localhost:3000/api/agua');
+    console.log(`Site: http://localhost:${PORT}`);
+    console.log(`API:  http://localhost:${PORT}/api/agua`);
     console.log('');
 });

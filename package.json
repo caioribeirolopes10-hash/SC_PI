@@ -1,4 +1,11 @@
 {
+  "name": "sc-pi-monitoramento-agua",
+  "version": "1.0.0",
+  "private": true,
+  "main": "PI.js",
+  "scripts": {
+    "start": "node PI.js"
+  },
   "dependencies": {
     "express": "^5.2.1"
   }

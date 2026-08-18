@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO.Ports;
-using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -19,8 +18,8 @@ class Program
     static double capacidadeMaxLitros = 100;
     // API da IA Python
     static string urlIA = "http://127.0.0.1:5000/prever";
-    // Servidor para o JavaScript
-    static string urlServidor = "http://localhost:3000";
+    // API Node que abastece a interface Web
+    static string urlServidor = "http://localhost:3000/api/agua";
     // Porta serial
     static SerialPort porta;
 
@@ -30,7 +29,6 @@ class Program
     static double ultimoNivelPorcentagem = 0;
     static string ultimaClassificacao = "Aguardando";
 
-    // MAIN
     static void Main()
     {
         Console.WriteLine("======================================");
@@ -54,8 +52,6 @@ class Program
         {
             return;
         }
-        // Inicia servidor para o JavaScript
-        IniciarServidorParaJS();
         Console.WriteLine();
         Console.WriteLine("Sistema iniciado.");
         Console.WriteLine("Aguardando dados do STM32...");
@@ -251,7 +247,7 @@ class Program
             {
                 string resultado =await resposta.Content.ReadAsStringAsync();
                 Console.WriteLine("Resposta da IA: "+ resultado);
-                ProcessarRespostaIA(resultado);
+                await ProcessarRespostaIA(resultado);
             }
             else
             {
@@ -266,7 +262,7 @@ class Program
     }
 
     // 10. IA → C#
-    static void ProcessarRespostaIA(string json)
+    static async Task ProcessarRespostaIA(string json)
     {
         try
         {
@@ -277,6 +273,11 @@ class Program
             {
                 ultimaClassificacao =classificacao.GetString()??"Desconhecido";
                 Console.WriteLine("Classificação: "+ ultimaClassificacao);
+                await EnviarParaServidorWeb();
+            }
+            else
+            {
+                Console.WriteLine("A IA não retornou o campo 'classificacao'.");
             }
         }
         catch (Exception ex)
@@ -286,84 +287,45 @@ class Program
         }
     }
 
-    // 11. C# → JAVASCRIPT
-
-    static void IniciarServidorParaJS()
-    {
-        HttpListener servidor = new HttpListener();
-
-        servidor.Prefixes.Add(urlServidor + "/api/agua/");
-
-        try
-        {
-            servidor.Start();
-            Console.WriteLine();
-            Console.WriteLine("Comunicação com JavaScript iniciada.");
-            Console.WriteLine("Endpoint: http://localhost:3000/api/agua");
-
-            Task.Run(async () =>
-            {
-                while (true)
-                {
-                    HttpListenerContext contexto =await servidor.GetContextAsync();
-                    ResponderAoJavaScript(contexto);
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Erro no servidor:");
-            Console.WriteLine(ex.Message);
-        }
-    }
-
-    // 12. ENVIAR JSON PARA JS
- 
-    static void ResponderAoJavaScript(
-        HttpListenerContext contexto)
+    // 11. C# → NODE → HTML
+    static async Task EnviarParaServidorWeb()
     {
         try
         {
-            string caminho =contexto.Request.Url?.AbsolutePath??"/";
-
-            if (caminho == "/api/agua")
+            var dados =new
             {
-                string json =CriarJsonParaSite();
-                byte[] dados = Encoding.UTF8.GetBytes(json);
+                nivel =ultimoNivelPorcentagem,
+                classificacao =ultimaClassificacao
+            };
 
-                contexto.Response.ContentType ="application/json";
-                contexto.Response.Headers.Add("Access-Control-Allow-Origin","*");
-                contexto.Response.ContentLength64 =dados.Length;
-                contexto.Response.OutputStream.Write(dados,0,dados.Length);
-                contexto.Response.OutputStream.Close();
+            string json =JsonSerializer.Serialize(dados);
+
+            using HttpClient cliente =new HttpClient();
+            using StringContent conteudo =new StringContent(
+                json,
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            HttpResponseMessage resposta =await cliente.PostAsync(
+                urlServidor,
+                conteudo
+            );
+
+            if (resposta.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Dados enviados para a interface Web.");
             }
             else
             {
-                contexto.Response.StatusCode =404;
-                contexto.Response.Close();
+                Console.WriteLine("Erro no servidor Web: "+ resposta.StatusCode);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Erro ao enviar dados:");
-
+            Console.WriteLine("Erro ao enviar dados para o servidor Web:");
             Console.WriteLine(ex.Message);
-            contexto.Response.StatusCode =500;
-            contexto.Response.Close();
         }
-    }
 
-    // 13. JSON PARA O SITE
-    static string CriarJsonParaSite()
-    {
-        var dados = new
-        {
-            resistencia =ultimaResistencia,
-            litros =ultimoNivelLitros,
-            nivel =ultimoNivelPorcentagem,
-            classificacao =ultimaClassificacao
-        };
-
-        return JsonSerializer.Serialize(dados);
     }
 }
