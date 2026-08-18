@@ -32,24 +32,77 @@ app.post('/login', (req, res) => {
 });
 
 // RECEBER RESULTADO DA IA
-app.post('/api/agua', (req, res) => {
-    const { nivel, classificacao } = req.body;
-    if (nivel === undefined || !classificacao) {
-        return res.status(400).json({ erro: "Dados incompletos" });
+app.post('/api/agua', async (req, res) => {
+    const { nivel } = req.body;
+
+    if (nivel === undefined) {
+        return res.status(400).json({ erro: "Nivel não informado" });
     }
-    dadosAgua = {nivel: Number(nivel),classificacao: classificacao, horario: new Date().toLocaleTimeString('pt-BR')};
-    console.log("Novo resultado da IA:");
-    console.log(dadosAgua);
-    res.json({
-        sucesso: true,
-        mensagem: "Dados recebidos",
-        dados: dadosAgua
-    });
+
+    try {
+
+        // CHAMAR A IA AUTOMATICAMENTE
+        const respostaIA = await fetch('http://127.0.0.1:5000/prever', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                nivel: Number(nivel)
+            })
+        });
+
+        if (!respostaIA.ok) {
+            throw new Error(`Erro na IA: ${respostaIA.status}`);
+        }
+
+        const resultadoIA = await respostaIA.json();
+
+        console.log("Resposta da IA:");
+        console.log(resultadoIA);
+
+        // PEGAR CLASSIFICAÇÃO DA IA
+        const classificacao = resultadoIA.classificacao;
+
+        if (!classificacao) {
+            return res.status(500).json({
+                erro: "A IA não retornou uma classificação"
+            });
+        }
+
+        // SALVAR DADOS
+        dadosAgua = {
+            nivel: Number(nivel),
+            classificacao: classificacao,
+            horario: new Date().toLocaleTimeString('pt-BR')
+        };
+
+        console.log("Novo resultado da IA:");
+        console.log(dadosAgua);
+
+        // RESPONDER
+        res.json({
+            sucesso: true,
+            mensagem: "Dados recebidos e classificados pela IA",
+            dados: dadosAgua
+        });
+
+    } catch (erro) {
+
+        console.error("Erro ao chamar a IA:", erro.message);
+
+        res.status(500).json({
+            erro: "Não foi possível consultar a IA",
+            detalhes: erro.message
+        });
+    }
 });
+
 // ENVIAR DADOS PARA O HTML
 app.get('/api/agua', (req, res) => {
     res.json(dadosAgua);
 });
+
 // SERVIDOR
 app.listen(3000, () => {
     console.log('');
