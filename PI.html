@@ -1,2239 +1,2158 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>HydroSense | Monitoramento de Água</title>
-
-    <style>
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            background:
-                radial-gradient(circle at 20% 20%, rgba(0, 174, 255, 0.12), transparent 30%),
-                radial-gradient(circle at 80% 80%, rgba(0, 102, 255, 0.10), transparent 30%),
-                #07111f;
-
-            color: #ffffff;
-            overflow-x: hidden;
-        }
-
-        /* =========================
-           FUNDO
-        ========================= */
-
-        .background {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 0;
-        }
-
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.25;
-        }
-
-        .orb.one {
-            width: 300px;
-            height: 300px;
-            background: #008cff;
-            top: -100px;
-            left: -100px;
-        }
-
-        .orb.two {
-            width: 350px;
-            height: 350px;
-            background: #00d9ff;
-            right: -150px;
-            bottom: -150px;
-        }
-
-        /* =========================
-           LAYOUT
-        ========================= */
-
-        .container {
-            position: relative;
-            z-index: 1;
-            width: 92%;
-            max-width: 1250px;
-            margin: auto;
-            padding: 30px 0;
-        }
-
-        /* =========================
-           HEADER
-        ========================= */
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 35px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .logo-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background: linear-gradient(135deg, #00bfff, #0066ff);
-
-            box-shadow:
-                0 0 25px rgba(0, 174, 255, 0.35);
-
-            font-size: 25px;
-        }
-
-        .logo h1 {
-            font-size: 21px;
-            letter-spacing: 0.5px;
-        }
-
-        .logo p {
-            color: #7f96ad;
-            font-size: 13px;
-            margin-top: 3px;
-        }
-
-        .connection {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-
-            padding: 10px 16px;
-            border-radius: 30px;
-
-            color: #9fb3c8;
-            font-size: 13px;
-        }
-
-        .connection-dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            background: #ff4757;
-
-            box-shadow: 0 0 10px #ff4757;
-        }
-
-        .connection.online .connection-dot {
-            background: #00e676;
-            box-shadow: 0 0 10px #00e676;
-        }
-
-        /* =========================
-           TÍTULO
-        ========================= */
-
-        .welcome {
-            margin-bottom: 25px;
-        }
-
-        .welcome h2 {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-
-        .welcome p {
-            color: #8297ac;
-            font-size: 15px;
-        }
-
-        /* =========================
-           CARDS
-        ========================= */
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr 1fr;
-            gap: 20px;
-        }
-
-        .card {
-            background: rgba(13, 28, 47, 0.78);
-
-            border: 1px solid rgba(255,255,255,0.08);
-
-            border-radius: 22px;
-
-            padding: 25px;
-
-            box-shadow:
-                0 20px 50px rgba(0,0,0,0.25);
-
-            backdrop-filter: blur(15px);
-
-            transition: 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-3px);
-
-            border-color: rgba(0,174,255,0.25);
-
-            box-shadow:
-                0 25px 60px rgba(0,0,0,0.35);
-        }
-
-        .card-title {
-            color: #8297ac;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 18px;
-        }
-
-        /* =========================
-           NÍVEL
-        ========================= */
-
-        .level-card {
-            grid-row: span 2;
-            min-height: 430px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .level-container {
-            flex: 1;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .level-circle {
-
-            width: 280px;
-            height: 280px;
-
-            border-radius: 50%;
-
-            position: relative;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background:
-                conic-gradient(
-                    #00bfff 0deg,
-                    #0066ff var(--progress),
-                    rgba(255,255,255,0.07) var(--progress),
-                    rgba(255,255,255,0.07) 360deg
-                );
-
-            box-shadow:
-                0 0 50px rgba(0,174,255,0.12);
-        }
-
-        .level-circle::before {
-
-            content: "";
-
-            position: absolute;
-
-            width: 230px;
-            height: 230px;
-
-            border-radius: 50%;
-
-            background: #0b1a2d;
-
-            box-shadow:
-                inset 0 0 30px rgba(0,0,0,0.3);
-        }
-
-        .level-content {
-            position: relative;
-            z-index: 2;
-
-            text-align: center;
-        }
-
-        .level-number {
-            font-size: 62px;
-            font-weight: bold;
-
-            background: linear-gradient(
-                135deg,
-                #ffffff,
-                #6edcff
-            );
-
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .percent {
-            color: #6d849a;
-            font-size: 17px;
-        }
-
-        .level-label {
-            margin-top: 7px;
-            color: #7e95aa;
-            font-size: 13px;
-        }
-
-        /* =========================
-           CLASSIFICAÇÃO
-        ========================= */
-
-        .classification {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-
-            min-height: 190px;
-        }
-
-        .classification-badge {
-
-            display: inline-flex;
-
-            align-items: center;
-            justify-content: center;
-
-            padding: 13px 22px;
-
-            border-radius: 50px;
-
-            width: fit-content;
-
-            font-size: 20px;
-            font-weight: bold;
-
-            margin-top: 5px;
-
-            background: rgba(0,191,255,0.12);
-
-            border: 1px solid rgba(0,191,255,0.25);
-
-            color: #5edcff;
-
-            box-shadow:
-                0 0 25px rgba(0,174,255,0.08);
-        }
-
-        .classification-badge.medium {
-            color: #ffd166;
-            background: rgba(255,209,102,0.10);
-            border-color: rgba(255,209,102,0.25);
-        }
-
-        .classification-badge.high {
-            color: #ff6b81;
-            background: rgba(255,71,87,0.10);
-            border-color: rgba(255,71,87,0.25);
-        }
-
-        /* =========================
-           ALERTA CRÍTICO
-        ========================= */
-
-        .critical-alert {
-            display: none;
-
-            margin-top: 20px;
-
-            padding: 18px 20px;
-
-            border-radius: 16px;
-
-            background: rgba(255,71,87,0.12);
-
-            border: 1px solid rgba(255,71,87,0.35);
-
-            color: #ff7182;
-
-            box-shadow:
-                0 0 30px rgba(255,71,87,0.10);
-
-            animation: alertPulse 1.8s infinite;
-        }
-
-        .critical-alert.active {
-            display: block;
-        }
-
-        .critical-alert strong {
-            display: block;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .critical-alert span {
-            font-size: 13px;
-            color: #d9919b;
-        }
-
-        @keyframes alertPulse {
-            0%, 100% {
-                box-shadow: 0 0 15px rgba(255,71,87,0.08);
-            }
-
-            50% {
-                box-shadow: 0 0 30px rgba(255,71,87,0.25);
-            }
-        }
-
-        /* =========================
-           STATUS
-        ========================= */
-
-        .status {
-            min-height: 190px;
-        }
-
-        .status-row {
-
-            display: flex;
-            align-items: center;
-
-            gap: 15px;
-
-            margin-top: 20px;
-        }
-
-        .status-icon {
-
-            width: 48px;
-            height: 48px;
-
-            border-radius: 14px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background: rgba(0,230,118,0.10);
-
-            color: #00e676;
-
-            font-size: 22px;
-        }
-
-        .status-text strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .status-text span {
-            color: #71879c;
-            font-size: 13px;
-        }
-
-        /* =========================
-           INFORMAÇÕES
-        ========================= */
-
-        .info-grid {
-
-            grid-column: 2 / 4;
-
-            display: grid;
-
-            grid-template-columns: repeat(3, 1fr);
-
-            gap: 20px;
-        }
-
-        .info-card {
-
-            background: rgba(13, 28, 47, 0.78);
-
-            border: 1px solid rgba(255,255,255,0.08);
-
-            border-radius: 20px;
-
-            padding: 22px;
-        }
-
-        .info-icon {
-            font-size: 22px;
-            margin-bottom: 15px;
-        }
-
-        .info-title {
-            color: #7890a6;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        .info-value {
-            margin-top: 8px;
-            font-size: 20px;
-            font-weight: bold;
-        }
-
-        /* =========================
-           ESTATÍSTICAS
-        ========================= */
-
-        .statistics {
-            margin-top: 25px;
-
-            display: grid;
-
-            grid-template-columns: repeat(3, 1fr);
-
-            gap: 20px;
-        }
-
-        .stat-card {
-            background: rgba(13, 28, 47, 0.78);
-
-            border: 1px solid rgba(255,255,255,0.08);
-
-            border-radius: 20px;
-
-            padding: 24px;
-        }
-
-        .stat-title {
-            color: #7890a6;
-
-            font-size: 12px;
-
-            text-transform: uppercase;
-
-            letter-spacing: 0.8px;
-
-            margin-bottom: 10px;
-        }
-
-        .stat-value {
-            font-size: 30px;
-            font-weight: bold;
-        }
-
-        .stat-description {
-            margin-top: 6px;
-
-            color: #637b91;
-
-            font-size: 12px;
-        }
-
-        /* =========================
-           TENDÊNCIA
-        ========================= */
-
-        .trend-card {
-            margin-top: 25px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            gap: 20px;
-        }
-
-        .trend-content {
-            display: flex;
-            align-items: center;
-            gap: 18px;
-        }
-
-        .trend-icon {
-            width: 55px;
-            height: 55px;
-
-            border-radius: 16px;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            background: rgba(0,191,255,0.10);
-
-            color: #5edcff;
-
-            font-size: 27px;
-        }
-
-        .trend-title {
-            color: #7890a6;
-
-            font-size: 12px;
-
-            text-transform: uppercase;
-
-            letter-spacing: 0.8px;
-
-            margin-bottom: 6px;
-        }
-
-        .trend-value {
-            font-size: 21px;
-            font-weight: bold;
-        }
-
-        .trend-description {
-            color: #637b91;
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
-        /* =========================
-           GRÁFICO
-        ========================= */
-
-        .chart-card {
-            margin-top: 25px;
-        }
-
-        .chart-header {
-            display: flex;
-
-            justify-content: space-between;
-
-            align-items: center;
-
-            margin-bottom: 20px;
-        }
-
-        .chart-header h3 {
-            font-size: 20px;
-        }
-
-        .chart-header p {
-            color: #71879c;
-            font-size: 12px;
-        }
-
-        .chart-container {
-            position: relative;
-
-            width: 100%;
-
-            height: 320px;
-        }
-
-        #grafico {
-            width: 100%;
-            height: 100%;
-        }
-
-        .empty-chart {
-            position: absolute;
-
-            inset: 0;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            color: #5d7489;
-
-            font-size: 14px;
-
-            pointer-events: none;
-        }
-
-        /* =========================
-           FOOTER
-        ========================= */
-
-        footer {
-
-            text-align: center;
-
-            margin-top: 30px;
-
-            color: #526a80;
-
-            font-size: 12px;
-        }
-
-        /* =========================
-           SIMULADOR DE TANQUE
-        ========================= */
-
-        .tank-simulator {
-            margin-top: 25px;
-            background: rgba(13, 28, 47, 0.78);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 22px;
-            padding: 28px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-            backdrop-filter: blur(15px);
-        }
-
-        .tank-header {
-            margin-bottom: 25px;
-        }
-
-        .tank-header h3 {
-            font-size: 20px;
-            margin-bottom: 6px;
-        }
-
-        .tank-header p {
-            color: #8297ac;
-            font-size: 13px;
-        }
-
-        .tank-area {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 45px;
-            min-height: 380px;
-        }
-
-        .tank {
-            position: relative;
-            width: 190px;
-            height: 320px;
-            border: 4px solid rgba(174, 225, 255, 0.65);
-            border-top: 7px solid rgba(174, 225, 255, 0.75);
-            border-radius: 18px 18px 28px 28px;
-            overflow: hidden;
-            background: rgba(255,255,255,0.035);
-            box-shadow:
-                inset 0 0 30px rgba(0,0,0,0.25),
-                0 0 35px rgba(0,174,255,0.10);
-        }
-
-        .tank-water {
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            height: 0%;
-            background: linear-gradient(
-                to top,
-                rgba(0, 102, 255, 0.88),
-                rgba(0, 191, 255, 0.68)
-            );
-            transition: height 1s ease;
-            box-shadow: inset 0 10px 25px rgba(120,230,255,0.18);
-        }
-
-        .tank-water::before {
-            content: "";
-            position: absolute;
-            top: -8px;
-            left: -10%;
-            width: 120%;
-            height: 18px;
-            border-radius: 50%;
-            background: rgba(110, 220, 255, 0.45);
-            animation: waterWave 2.5s ease-in-out infinite;
-        }
-
-        .tank-glass {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            background: linear-gradient(
-                90deg,
-                rgba(255,255,255,0.10),
-                transparent 22%,
-                transparent 78%,
-                rgba(255,255,255,0.04)
-            );
-        }
-
-        .tank-scale {
-            height: 320px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            color: #7890a6;
-            font-size: 12px;
-        }
-
-        .tank-info {
-            min-width: 230px;
-        }
-
-        .tank-percent {
-            font-size: 52px;
-            font-weight: bold;
-            background: linear-gradient(135deg, #ffffff, #6edcff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .tank-state {
-            margin-top: 6px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #5edcff;
-        }
-
-        .tank-measure {
-            margin-top: 12px;
-            color: #71879c;
-            font-size: 13px;
-        }
-
-        @keyframes waterWave {
-            0%, 100% {
-                transform: translateX(-3%);
-            }
-
-            50% {
-                transform: translateX(3%);
-            }
-        }
-
-        /* =========================
-           RESPONSIVO
-        ========================= */
-
-        @media (max-width: 900px) {
-
-            .dashboard {
-                grid-template-columns: 1fr;
-            }
-
-            .level-card {
-                grid-row: auto;
-            }
-
-            .info-grid {
-                grid-column: auto;
-                grid-template-columns: 1fr;
-            }
-
-            .statistics {
-                grid-template-columns: 1fr;
-            }
-
-            header {
-                align-items: flex-start;
-                gap: 20px;
-                flex-direction: column;
-            }
-
-        }
-
-        @media (max-width: 600px) {
-
-            .tank-area {
-                flex-direction: column;
-                gap: 25px;
-            }
-
-            .tank-info {
-                text-align: center;
-            }
-
-            .tank-scale {
-                display: none;
-            }
-
-            .trend-card {
-                align-items: flex-start;
-                flex-direction: column;
-            }
-
-            .chart-container {
-                height: 250px;
-            }
-
-        }
-
-        @media (max-width: 500px) {
-
-            .container {
-                width: 94%;
-                padding-top: 20px;
-            }
-
-            .welcome h2 {
-                font-size: 25px;
-            }
-
-            .level-circle {
-                width: 230px;
-                height: 230px;
-            }
-
-            .level-circle::before {
-                width: 190px;
-                height: 190px;
-            }
-
-            .level-number {
-                font-size: 50px;
-            }
-
-        }
-
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HydroSense | Monitoramento de Água</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(0,174,255,0.12), transparent 30%),
+        radial-gradient(circle at 80% 80%, rgba(0,102,255,0.10), transparent 30%),
+        #07111f;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+.background {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.25;
+}
+
+.orb.one {
+    width: 300px;
+    height: 300px;
+    background: #008cff;
+    top: -100px;
+    left: -100px;
+}
+
+.orb.two {
+    width: 350px;
+    height: 350px;
+    background: #00d9ff;
+    right: -150px;
+    bottom: -150px;
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    width: 92%;
+    max-width: 1250px;
+    margin: auto;
+    padding: 30px 0;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.logo-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #00bfff, #0066ff);
+    box-shadow: 0 0 25px rgba(0,174,255,0.35);
+    font-size: 25px;
+}
+
+.logo h1 {
+    font-size: 21px;
+    letter-spacing: 0.5px;
+}
+
+.logo p {
+    color: #7f96ad;
+    font-size: 13px;
+    margin-top: 3px;
+}
+
+.connection {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 16px;
+    border-radius: 30px;
+    color: #9fb3c8;
+    font-size: 13px;
+}
+
+.connection-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ff4757;
+    box-shadow: 0 0 10px #ff4757;
+}
+
+.connection.online .connection-dot {
+    background: #00e676;
+    box-shadow: 0 0 10px #00e676;
+}
+
+.welcome {
+    margin-bottom: 25px;
+}
+
+.welcome h2 {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.welcome p {
+    color: #8297ac;
+    font-size: 15px;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 20px;
+}
+
+.card {
+    background: rgba(13,28,47,0.78);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px;
+    padding: 25px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    backdrop-filter: blur(5px);
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0,174,255,0.25);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+}
+
+.card-title {
+    color: #8297ac;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+}
+
+.level-card {
+    grid-row: span 2;
+    min-height: 430px;
+    display: flex;
+    flex-direction: column;
+}
+
+.level-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.level-circle {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: conic-gradient(
+        #00bfff 0deg,
+        #0066ff var(--progress),
+        rgba(255,255,255,0.07) var(--progress),
+        rgba(255,255,255,0.07) 360deg
+    );
+    box-shadow: 0 0 50px rgba(0,174,255,0.12);
+}
+
+.level-circle::before {
+    content: "";
+    position: absolute;
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    background: #0b1a2d;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+}
+
+.level-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+}
+
+.level-number {
+    font-size: 62px;
+    font-weight: bold;
+    background: linear-gradient(135deg,#ffffff,#6edcff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.percent {
+    color: #6d849a;
+    font-size: 17px;
+}
+
+.level-label {
+    margin-top: 7px;
+    color: #7e95aa;
+    font-size: 13px;
+}
+
+.classification {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 190px;
+}
+
+.classification-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 22px;
+    border-radius: 50px;
+    width: fit-content;
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 5px;
+    background: rgba(0,191,255,0.12);
+    border: 1px solid rgba(0,191,255,0.25);
+    color: #5edcff;
+    box-shadow: 0 0 25px rgba(0,174,255,0.08);
+}
+
+.classification-badge.medium {
+    color: #ffd166;
+    background: rgba(255,209,102,0.10);
+    border-color: rgba(255,209,102,0.25);
+}
+
+.classification-badge.high {
+    color: #ff6b81;
+    background: rgba(255,71,87,0.10);
+    border-color: rgba(255,71,87,0.25);
+}
+
+.critical-alert {
+    display: none;
+    margin-top: 20px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: rgba(255,71,87,0.12);
+    border: 1px solid rgba(255,71,87,0.35);
+    color: #ff7182;
+    box-shadow: 0 0 30px rgba(255,71,87,0.10);
+    animation: alertPulse 1.8s infinite;
+}
+
+.critical-alert.active {
+    display: block;
+}
+
+.critical-alert strong {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.critical-alert span {
+    font-size: 13px;
+    color: #d9919b;
+}
+
+@keyframes alertPulse {
+    0%,100% {
+        box-shadow: 0 0 15px rgba(255,71,87,0.08);
+    }
+
+    50% {
+        box-shadow: 0 0 30px rgba(255,71,87,0.25);
+    }
+}
+
+.status {
+    min-height: 190px;
+}
+
+.status-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,230,118,0.10);
+    color: #00e676;
+    font-size: 22px;
+}
+
+.status-text strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.status-text span {
+    color: #71879c;
+    font-size: 13px;
+}
+
+.info-grid {
+    grid-column: 2 / 4;
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 20px;
+}
+
+.info-card {
+    background: rgba(13,28,47,0.78);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 22px;
+}
+
+.info-icon {
+    font-size: 22px;
+    margin-bottom: 15px;
+}
+
+.info-title {
+    color: #7890a6;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.info-value {
+    margin-top: 8px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.statistics {
+    margin-top: 25px;
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 20px;
+}
+
+.stat-card {
+    background: rgba(13,28,47,0.78);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 24px;
+}
+
+.stat-title {
+    color: #7890a6;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.stat-description {
+    margin-top: 6px;
+    color: #637b91;
+    font-size: 12px;
+}
+
+.trend-card {
+    margin-top: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.trend-content {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.trend-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,191,255,0.10);
+    color: #5edcff;
+    font-size: 27px;
+}
+
+.trend-title {
+    color: #7890a6;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+}
+
+.trend-value {
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.trend-description {
+    color: #637b91;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.chart-card {
+    margin-top: 25px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.chart-header h3 {
+    font-size: 20px;
+}
+
+.chart-header p {
+    color: #71879c;
+    font-size: 12px;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 320px;
+}
+
+#grafico {
+    width: 100%;
+    height: 100%;
+}
+
+.empty-chart {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5d7489;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.tank-simulator {
+    margin-top: 25px;
+    background: rgba(13,28,47,0.78);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px;
+    padding: 28px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    backdrop-filter: blur(5px);
+}
+
+.tank-header {
+    margin-bottom: 25px;
+}
+
+.tank-header h3 {
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+.tank-header p {
+    color: #8297ac;
+    font-size: 13px;
+}
+
+.tank-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 45px;
+    min-height: 380px;
+}
+
+.tank {
+    position: relative;
+    width: 190px;
+    height: 320px;
+    border: 4px solid rgba(174,225,255,0.65);
+    border-top: 7px solid rgba(174,225,255,0.75);
+    border-radius: 18px 18px 28px 28px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.035);
+    box-shadow:
+        inset 0 0 30px rgba(0,0,0,0.25),
+        0 0 35px rgba(0,174,255,0.10);
+}
+
+.tank-water {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 0%;
+    background: linear-gradient(
+        to top,
+        rgba(0,102,255,0.88),
+        rgba(0,191,255,0.68)
+    );
+    transition: height 0.2s linear;
+    box-shadow: inset 0 10px 25px rgba(120,230,255,0.18);
+}
+
+.tank-water::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: -10%;
+    width: 120%;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(110,220,255,0.45);
+    animation: waterWave 2.5s ease-in-out infinite;
+}
+
+.tank-glass {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0.10),
+        transparent 22%,
+        transparent 78%,
+        rgba(255,255,255,0.04)
+    );
+}
+
+.tank-scale {
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: #7890a6;
+    font-size: 12px;
+}
+
+.tank-info {
+    min-width: 230px;
+}
+
+.tank-percent {
+    font-size: 52px;
+    font-weight: bold;
+    background: linear-gradient(135deg,#ffffff,#6edcff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.tank-state {
+    margin-top: 6px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #5edcff;
+}
+
+.tank-measure {
+    margin-top: 12px;
+    color: #71879c;
+    font-size: 13px;
+}
+
+@keyframes waterWave {
+    0%,100% {
+        transform: translateX(-3%);
+    }
+
+    50% {
+        transform: translateX(3%);
+    }
+}
+
+footer {
+    text-align: center;
+    margin-top: 30px;
+    color: #526a80;
+    font-size: 12px;
+}
+
+@media (max-width:900px) {
+
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .level-card {
+        grid-row: auto;
+    }
+
+    .info-grid {
+        grid-column: auto;
+        grid-template-columns: 1fr;
+    }
+
+    .statistics {
+        grid-template-columns: 1fr;
+    }
+
+    header {
+        align-items: flex-start;
+        gap: 20px;
+        flex-direction: column;
+    }
+}
+
+@media (max-width:600px) {
+
+    .tank-area {
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .tank-info {
+        text-align: center;
+    }
+
+    .tank-scale {
+        display: none;
+    }
+
+    .trend-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .chart-container {
+        height: 250px;
+    }
+}
+
+@media (max-width:500px) {
+
+    .container {
+        width: 94%;
+        padding-top: 20px;
+    }
+
+    .welcome h2 {
+        font-size: 25px;
+    }
+
+    .level-circle {
+        width: 230px;
+        height: 230px;
+    }
+
+    .level-circle::before {
+        width: 190px;
+        height: 190px;
+    }
+
+    .level-number {
+        font-size: 50px;
+    }
+}
+
+</style>
 </head>
-
 
 <body>
 
-    <div class="background">
+<div class="background">
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+</div>
 
-        <div class="orb one"></div>
-        <div class="orb two"></div>
+<div class="container">
+
+<header>
+
+    <div class="logo">
+
+        <div class="logo-icon">💧</div>
+
+        <div>
+            <h1>HydroSense</h1>
+            <p>Sistema inteligente de monitoramento</p>
+        </div>
 
     </div>
 
+    <div class="connection" id="connection">
 
-    <div class="container">
+        <div class="connection-dot"></div>
 
-        <!-- HEADER -->
+        <span id="connectionText">
+            Conectando...
+        </span>
 
-        <header>
+    </div>
 
-            <div class="logo">
+</header>
 
-                <div class="logo-icon">
-                    💧
-                </div>
+<section class="welcome">
 
-                <div>
+    <h2>Monitoramento da Água</h2>
 
-                    <h1>HydroSense</h1>
+    <p>
+        Acompanhe em tempo real o nível da água e a classificação realizada pela inteligência artificial.
+    </p>
 
-                    <p>
-                        Sistema inteligente de monitoramento
-                    </p>
+</section>
 
-                </div>
+<main class="dashboard">
 
-            </div>
+<div class="card level-card">
 
+    <div class="card-title">
+        Nível atual
+    </div>
 
-            <div class="connection" id="connection">
-
-                <div class="connection-dot"></div>
-
-                <span id="connectionText">
-                    Conectando...
-                </span>
-
-            </div>
-
-        </header>
-
-
-        <!-- TÍTULO -->
-
-        <section class="welcome">
-
-            <h2>
-                Monitoramento da Água
-            </h2>
-
-            <p>
-                Acompanhe em tempo real o nível da água e a classificação realizada pela inteligência artificial.
-            </p>
-
-        </section>
-
-
-        <!-- DASHBOARD -->
-
-        <main class="dashboard">
-
-
-            <!-- NÍVEL -->
-
-            <div class="card level-card">
-
-                <div class="card-title">
-                    Nível atual
-                </div>
-
-
-                <div class="level-container">
-
-                    <div
-                        class="level-circle"
-                        id="levelCircle"
-                        style="--progress: 0deg;"
-                    >
-
-                        <div class="level-content">
-
-                            <div
-                                class="level-number"
-                                id="nivel"
-                            >
-                                0
-                            </div>
-
-                            <div class="percent">
-                                %
-                            </div>
-
-                            <div class="level-label">
-                                nível da água
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- CLASSIFICAÇÃO -->
-
-            <div class="card classification">
-
-                <div class="card-title">
-                    Classificação da IA
-                </div>
-
-                <div
-                    class="classification-badge"
-                    id="classificacao"
-                >
-                    Aguardando
-                </div>
-
-            </div>
-
-
-            <!-- STATUS -->
-
-            <div class="card status">
-
-                <div class="card-title">
-                    Sistema
-                </div>
-
-                <div class="status-row">
-
-                    <div
-                        class="status-icon"
-                        id="statusIcon"
-                    >
-                        ✓
-                    </div>
-
-                    <div class="status-text">
-
-                        <strong id="statusSistema">
-                            Sistema online
-                        </strong>
-
-                        <span>
-                            Comunicação com o servidor
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- INFORMAÇÕES -->
-
-            <div class="info-grid">
-
-                <div class="info-card">
-
-                    <div class="info-icon">
-                        📡
-                    </div>
-
-                    <div class="info-title">
-                        Sensor
-                    </div>
-
-                    <div class="info-value">
-                        STM32
-                    </div>
-
-                </div>
-
-
-                <div class="info-card">
-
-                    <div class="info-icon">
-                        🧠
-                    </div>
-
-                    <div class="info-title">
-                        Inteligência Artificial
-                    </div>
-
-                    <div class="info-value">
-                        KNN
-                    </div>
-
-                </div>
-
-
-                <div class="info-card">
-
-                    <div class="info-icon">
-                        🕐
-                    </div>
-
-                    <div class="info-title">
-                        Última atualização
-                    </div>
-
-                    <div
-                        class="info-value"
-                        id="horario"
-                    >
-                        --
-                    </div>
-
-                </div>
-
-            </div>
-
-        </main>
-
-
-        <!-- ALERTA CRÍTICO -->
+    <div class="level-container">
 
         <div
-            class="critical-alert"
-            id="criticalAlert"
+            class="level-circle"
+            id="levelCircle"
+            style="--progress:0deg;"
         >
 
-            <strong>
-                ALERTA: estado crítico detectado
+            <div class="level-content">
+
+                <div
+                    class="level-number"
+                    id="nivel"
+                >
+                    0
+                </div>
+
+                <div class="percent">
+                    %
+                </div>
+
+                <div class="level-label">
+                    nível da água
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card classification">
+
+    <div class="card-title">
+        Classificação da IA
+    </div>
+
+    <div
+        class="classification-badge"
+        id="classificacao"
+    >
+        Aguardando
+    </div>
+
+</div>
+
+<div class="card status">
+
+    <div class="card-title">
+        Sistema
+    </div>
+
+    <div class="status-row">
+
+        <div
+            class="status-icon"
+            id="statusIcon"
+        >
+            ✓
+        </div>
+
+        <div class="status-text">
+
+            <strong id="statusSistema">
+                Sistema online
             </strong>
 
-            <span id="criticalMessage">
-                A classificação atual indica uma condição que requer atenção.
+            <span>
+                Comunicação com o servidor
             </span>
 
         </div>
 
+    </div>
 
-        <!-- ESTATÍSTICAS -->
+</div>
 
-        <section class="statistics">
+<div class="info-grid">
 
-            <div class="stat-card">
+<div class="info-card">
 
-                <div class="stat-title">
-                    Média
-                </div>
+    <div class="info-icon">
+        📡
+    </div>
 
-                <div
-                    class="stat-value"
-                    id="media"
-                >
-                    0%
-                </div>
+    <div class="info-title">
+        Sensor
+    </div>
 
-                <div class="stat-description">
-                    Média das últimas medições
-                </div>
+    <div class="info-value">
+        STM32
+    </div>
 
+</div>
+
+<div class="info-card">
+
+    <div class="info-icon">
+        🧠
+    </div>
+
+    <div class="info-title">
+        Inteligência Artificial
+    </div>
+
+    <div class="info-value">
+        KNN
+    </div>
+
+</div>
+
+<div class="info-card">
+
+    <div class="info-icon">
+        🕐
+    </div>
+
+    <div class="info-title">
+        Última atualização
+    </div>
+
+    <div
+        class="info-value"
+        id="horario"
+    >
+        --
+    </div>
+
+</div>
+
+</div>
+
+</main>
+
+<div
+    class="critical-alert"
+    id="criticalAlert"
+>
+
+    <strong>
+        ALERTA: estado crítico detectado
+    </strong>
+
+    <span id="criticalMessage">
+        A classificação atual indica uma condição que requer atenção.
+    </span>
+
+</div>
+
+<section class="statistics">
+
+<div class="stat-card">
+
+    <div class="stat-title">
+        Média
+    </div>
+
+    <div
+        class="stat-value"
+        id="media"
+    >
+        0%
+    </div>
+
+    <div class="stat-description">
+        Média das últimas medições
+    </div>
+
+</div>
+
+<div class="stat-card">
+
+    <div class="stat-title">
+        Máximo
+    </div>
+
+    <div
+        class="stat-value"
+        id="maximo"
+    >
+        0%
+    </div>
+
+    <div class="stat-description">
+        Maior nível registrado
+    </div>
+
+</div>
+
+<div class="stat-card">
+
+    <div class="stat-title">
+        Mínimo
+    </div>
+
+    <div
+        class="stat-value"
+        id="minimo"
+    >
+        0%
+    </div>
+
+    <div class="stat-description">
+        Menor nível registrado
+    </div>
+
+</div>
+
+<div class="stat-card">
+
+    <div class="stat-title">
+        ADC
+    </div>
+
+    <div
+        class="stat-value"
+        id="adc"
+    >
+        0
+    </div>
+
+    <div class="stat-description">
+        Valor lido pelo ADC do trimpot
+    </div>
+
+</div>
+
+</section>
+
+<section class="card trend-card">
+
+    <div class="trend-content">
+
+        <div
+            class="trend-icon"
+            id="trendIcon"
+        >
+            →
+        </div>
+
+        <div>
+
+            <div class="trend-title">
+                Tendência das últimas leituras
             </div>
 
-
-            <div class="stat-card">
-
-                <div class="stat-title">
-                    Máximo
-                </div>
-
-                <div
-                    class="stat-value"
-                    id="maximo"
-                >
-                    0%
-                </div>
-
-                <div class="stat-description">
-                    Maior nível registrado
-                </div>
-
+            <div
+                class="trend-value"
+                id="trendValue"
+            >
+                Aguardando dados
             </div>
 
-
-            <div class="stat-card">
-
-                <div class="stat-title">
-                    Mínimo
-                </div>
-
-                <div
-                    class="stat-value"
-                    id="minimo"
-                >
-                    0%
-                </div>
-
-                <div class="stat-description">
-                    Menor nível registrado
-                </div>
-
+            <div
+                class="trend-description"
+                id="trendDescription"
+            >
+                São necessárias algumas medições para calcular a tendência.
             </div>
 
-        </section>
-
-
-        <!-- TENDÊNCIA -->
-
-        <section class="card trend-card">
-
-            <div class="trend-content">
-
-                <div
-                    class="trend-icon"
-                    id="trendIcon"
-                >
-                    →
-                </div>
-
-                <div>
-
-                    <div class="trend-title">
-                        Tendência das últimas leituras
-                    </div>
-
-                    <div
-                        class="trend-value"
-                        id="trendValue"
-                    >
-                        Aguardando dados
-                    </div>
-
-                    <div
-                        class="trend-description"
-                        id="trendDescription"
-                    >
-                        São necessárias algumas medições para calcular a tendência.
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- GRÁFICO -->
-
-        <section class="card chart-card">
-
-            <div class="chart-header">
-
-                <div>
-
-                    <h3>
-                        Evolução das medições
-                    </h3>
-
-                    <p>
-                        Histórico do nível da água ao longo do tempo
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div class="chart-container">
-
-                <canvas id="grafico"></canvas>
-
-                <div
-                    class="empty-chart"
-                    id="emptyChart"
-                >
-                    Aguardando medições...
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- SIMULADOR DE TANQUE -->
-
-        <section class="tank-simulator">
-
-            <div class="tank-header">
-
-                <h3>
-                    Simulador do Tanque
-                </h3>
-
-                <p>
-                    Visualização do nível da água conforme as medições recebidas.
-                </p>
-
-            </div>
-
-
-            <div class="tank-area">
-
-                <div class="tank-scale">
-
-                    <span>100%</span>
-                    <span>75%</span>
-                    <span>50%</span>
-                    <span>25%</span>
-                    <span>0%</span>
-
-                </div>
-
-
-                <div class="tank">
-
-                    <div
-                        class="tank-water"
-                        id="tankWater"
-                    ></div>
-
-                    <div class="tank-glass"></div>
-
-                </div>
-
-
-                <div class="tank-info">
-
-                    <div
-                        class="tank-percent"
-                        id="tankPercent"
-                    >
-                        0%
-                    </div>
-
-                    <div
-                        class="tank-state"
-                        id="tankState"
-                    >
-                        Vazio
-                    </div>
-
-                    <div class="tank-measure">
-                        Nível atual recebido pelo sistema
-                    </div>
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <footer>
-
-            HydroSense © 2026 · Monitoramento inteligente do nível da água
-
-        </footer>
+        </div>
 
     </div>
 
+</section>
 
-    <script>
+<section class="card chart-card">
 
-        /* =========================
-           ELEMENTOS
-        ========================= */
+    <div class="chart-header">
 
-        const nivelElemento =
-            document.getElementById("nivel");
+        <div>
 
-        const classificacaoElemento =
-            document.getElementById("classificacao");
+            <h3>
+                Evolução das medições
+            </h3>
 
-        const horarioElemento =
-            document.getElementById("horario");
+            <p>
+                Histórico do nível da água ao longo do tempo
+            </p>
 
-        const levelCircle =
-            document.getElementById("levelCircle");
+        </div>
 
-        const connection =
-            document.getElementById("connection");
+    </div>
 
-        const connectionText =
-            document.getElementById("connectionText");
+    <div class="chart-container">
 
-        const statusSistema =
-            document.getElementById("statusSistema");
+        <canvas id="grafico"></canvas>
 
-        const tankWater =
-            document.getElementById("tankWater");
+        <div
+            class="empty-chart"
+            id="emptyChart"
+        >
+            Aguardando medições...
+        </div>
 
-        const tankPercent =
-            document.getElementById("tankPercent");
+    </div>
 
-        const tankState =
-            document.getElementById("tankState");
+</section>
 
-        const mediaElemento =
-            document.getElementById("media");
+<section class="tank-simulator">
 
-        const maximoElemento =
-            document.getElementById("maximo");
+    <div class="tank-header">
 
-        const minimoElemento =
-            document.getElementById("minimo");
+        <h3>
+            Simulador do Tanque
+        </h3>
 
-        const trendIcon =
-            document.getElementById("trendIcon");
+        <p>
+            Visualização do nível da água conforme as medições recebidas.
+        </p>
 
-        const trendValue =
-            document.getElementById("trendValue");
+    </div>
 
-        const trendDescription =
-            document.getElementById("trendDescription");
+    <div class="tank-area">
 
-        const criticalAlert =
-            document.getElementById("criticalAlert");
+        <div class="tank-scale">
 
-        const criticalMessage =
-            document.getElementById("criticalMessage");
+            <span>100%</span>
+            <span>75%</span>
+            <span>50%</span>
+            <span>25%</span>
+            <span>0%</span>
 
-        const emptyChart =
-            document.getElementById("emptyChart");
+        </div>
 
-        const canvas =
-            document.getElementById("grafico");
+        <div class="tank">
 
-        const ctx =
-            canvas.getContext("2d");
+            <div
+                class="tank-water"
+                id="tankWater"
+            ></div>
+
+            <div class="tank-glass"></div>
+
+        </div>
+
+        <div class="tank-info">
+
+            <div
+                class="tank-percent"
+                id="tankPercent"
+            >
+                0%
+            </div>
+
+            <div
+                class="tank-state"
+                id="tankState"
+            >
+                Vazio
+            </div>
+
+            <div class="tank-measure">
+                Nível atual recebido pelo sistema
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<footer>
+
+    HydroSense © 2026 · Monitoramento inteligente do nível da água
+
+</footer>
+
+</div>
+
+<script>
+
+/* ================================
+   ELEMENTOS
+================================ */
+
+const nivelElemento =
+    document.getElementById("nivel");
+
+const classificacaoElemento =
+    document.getElementById("classificacao");
+
+const horarioElemento =
+    document.getElementById("horario");
+
+const levelCircle =
+    document.getElementById("levelCircle");
+
+const connection =
+    document.getElementById("connection");
+
+const connectionText =
+    document.getElementById("connectionText");
+
+const statusSistema =
+    document.getElementById("statusSistema");
+
+const tankWater =
+    document.getElementById("tankWater");
+
+const tankPercent =
+    document.getElementById("tankPercent");
+
+const tankState =
+    document.getElementById("tankState");
+
+const mediaElemento =
+    document.getElementById("media");
+
+const maximoElemento =
+    document.getElementById("maximo");
+
+const minimoElemento =
+    document.getElementById("minimo");
+
+const adcElemento =
+    document.getElementById("adc");
+
+const trendIcon =
+    document.getElementById("trendIcon");
+
+const trendValue =
+    document.getElementById("trendValue");
+
+const trendDescription =
+    document.getElementById("trendDescription");
+
+const criticalAlert =
+    document.getElementById("criticalAlert");
+
+const criticalMessage =
+    document.getElementById("criticalMessage");
+
+const emptyChart =
+    document.getElementById("emptyChart");
+
+const canvas =
+    document.getElementById("grafico");
+
+const ctx =
+    canvas.getContext("2d");
 
 
-        /* =========================
+/* ================================
+   CONFIGURAÇÕES
+================================ */
+
+const historico = [];
+
+const maxLeituras = 30;
+
+const intervaloConsulta = 200;
+
+const intervaloGrafico = 500;
+
+
+/* ================================
+   CONTROLE
+================================ */
+
+let requisicaoEmAndamento = false;
+
+let ultimoNivel = null;
+
+let ultimaClassificacao = null;
+
+let ultimoHorario = null;
+
+let ultimoDesenho = 0;
+
+let ultimoLargura = 0;
+
+let ultimaAltura = 0;
+
+let ultimoDpr = 0;
+
+
+/* ================================
+   BUSCAR DADOS
+================================ */
+
+async function atualizarDados() {
+
+    if (requisicaoEmAndamento) {
+        return;
+    }
+
+    requisicaoEmAndamento = true;
+
+    try {
+
+        const resposta = await fetch(
+            "/api/agua?t=" + Date.now(),
+            {
+                cache: "no-store"
+            }
+        );
+
+        if (!resposta.ok) {
+            throw new Error(
+                "Servidor indisponível"
+            );
+        }
+
+        const dados =
+            await resposta.json();
+
+
+        /* ============================
+           ADC
+        ============================ */
+
+        let valorADC =
+            Number(dados.valor_adc);
+
+        if (!Number.isFinite(valorADC)) {
+            valorADC = 0;
+        }
+
+        adcElemento.textContent =
+            valorADC.toFixed(0);
+
+
+        /* ============================
+           NÍVEL
+        ============================ */
+
+        let nivel =
+            Number(dados.nivel);
+
+        if (!Number.isFinite(nivel)) {
+            nivel = 0;
+        }
+
+        nivel =
+            Math.min(
+                Math.max(nivel, 0),
+                100
+            );
+
+
+        const classificacao =
+            dados.classificacao ||
+            "Aguardando";
+
+
+        const horario =
+            dados.horario ||
+            "--";
+
+
+        /* ============================
+           DETECTAR MUDANÇA
+        ============================ */
+
+        const mudou =
+            ultimoNivel === null ||
+            nivel !== ultimoNivel ||
+            classificacao !== ultimaClassificacao;
+
+
+        /* ============================
+           NÚMERO DO NÍVEL
+        ============================ */
+
+        nivelElemento.textContent =
+            nivel.toFixed(0);
+
+
+        /* ============================
            HISTÓRICO
-        ========================= */
+        ============================ */
 
-        const historico = [];
+        if (mudou) {
 
-        const maxLeituras = 30;
+            const agora =
+                new Date();
 
-
-        /* =========================
-           ATUALIZAR DADOS
-        ========================= */
-
-        async function atualizarDados() {
-
-            try {
-
-                const resposta =
-                    await fetch("/api/agua");
-
-                if (!resposta.ok) {
-
-                    throw new Error(
-                        "Servidor indisponível"
-                    );
-
-                }
-
-
-                const dados =
-                    await resposta.json();
-
-
-                const nivel =
-                    Number(dados.nivel) || 0;
-
-
-                const classificacao =
-                    dados.classificacao ||
-                    "Aguardando";
-
-
-                /* =========================
-                   NÍVEL
-                ========================= */
-
-                nivelElemento.textContent =
-                    nivel.toFixed(0);
-
-
-                /* =========================
-                   HISTÓRICO
-                ========================= */
-
-                const agora =
-                    new Date();
-
-                historico.push({
-
-                    nivel: nivel,
-
-                    horario: agora.toLocaleTimeString(
-                        "pt-BR",
-                        {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit"
-                        }
-                    )
-
-                });
-
-
-                if (
-                    historico.length >
-                    maxLeituras
-                ) {
-
-                    historico.shift();
-
-                }
-
-
-                atualizarEstatisticas();
-
-                atualizarTendencia();
-
-                desenharGrafico();
-
-
-                /* =========================
-                   SIMULADOR DE TANQUE
-                ========================= */
-
-                const nivelTanque =
-                    Math.min(
-                        Math.max(nivel, 0),
-                        100
-                    );
-
-
-                tankWater.style.height =
-                    nivelTanque + "%";
-
-
-                tankPercent.textContent =
-                    nivelTanque.toFixed(0) + "%";
-
-
-                if (nivelTanque <= 0) {
-
-                    tankState.textContent =
-                        "Vazio";
-
-                }
-
-                else if (nivelTanque < 40) {
-
-                    tankState.textContent =
-                        "Baixo";
-
-                }
-
-                else if (nivelTanque < 70) {
-
-                    tankState.textContent =
-                        "Normal";
-
-                }
-
-                else if (nivelTanque < 100) {
-
-                    tankState.textContent =
-                        "Alto";
-
-                }
-
-                else {
-
-                    tankState.textContent =
-                        "Cheio";
-
-                }
-
-
-                /* =========================
-                   CÍRCULO
-                ========================= */
-
-                const graus =
-                    Math.min(
-                        Math.max(nivel, 0),
-                        100
-                    ) * 3.6;
-
-
-                levelCircle.style.setProperty(
-                    "--progress",
-                    graus + "deg"
+            const horarioGrafico =
+                agora.toLocaleTimeString(
+                    "pt-BR",
+                    {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit"
+                    }
                 );
 
 
-                /* =========================
-                   CLASSIFICAÇÃO
-                ========================= */
-
-                classificacaoElemento.textContent =
-                    classificacao;
+            historico.push({
+                nivel: nivel,
+                horario: horarioGrafico
+            });
 
 
-                classificacaoElemento.className =
-                    "classification-badge";
-
-
-                const texto =
-                    classificacao.toLowerCase();
-
-
-                if (
-                    texto.includes("medio") ||
-                    texto.includes("médio")
-                ) {
-
-                    classificacaoElemento.classList
-                        .add("medium");
-
-                }
-
-                else if (
-                    texto.includes("alto")
-                ) {
-
-                    classificacaoElemento.classList
-                        .add("high");
-
-                }
-
-
-                /* =========================
-                   ALERTA CRÍTICO
-                ========================= */
-
-                verificarAlerta(
-                    classificacao,
-                    nivel
-                );
-
-
-                /* =========================
-                   HORÁRIO
-                ========================= */
-
-                horarioElemento.textContent =
-                    dados.horario || "--";
-
-
-                /* =========================
-                   CONEXÃO
-                ========================= */
-
-                connection.classList.add(
-                    "online"
-                );
-
-
-                connectionText.textContent =
-                    "Servidor conectado";
-
-
-                statusSistema.textContent =
-                    "Sistema online";
-
-
+            if (
+                historico.length >
+                maxLeituras
+            ) {
+                historico.shift();
             }
 
-            catch (erro) {
 
-                console.error(erro);
+            atualizarEstatisticas();
 
-
-                connection.classList.remove(
-                    "online"
-                );
+            atualizarTendencia();
 
 
-                connectionText.textContent =
-                    "Servidor desconectado";
+            ultimoNivel =
+                nivel;
 
-
-                statusSistema.textContent =
-                    "Servidor indisponível";
-
-            }
-
+            ultimaClassificacao =
+                classificacao;
         }
 
 
-        /* =========================
-           ESTATÍSTICAS
-        ========================= */
+        /* ============================
+           TANQUE
+        ============================ */
 
-        function atualizarEstatisticas() {
+        tankWater.style.height =
+            nivel + "%";
 
-            if (historico.length === 0) {
-                return;
-            }
-
-
-            const valores =
-                historico.map(
-                    item => item.nivel
-                );
+        tankPercent.textContent =
+            nivel.toFixed(0) + "%";
 
 
-            const soma =
-                valores.reduce(
-                    (total, valor) =>
-                        total + valor,
-                    0
-                );
+        if (nivel <= 0) {
 
+            tankState.textContent =
+                "Vazio";
 
-            const media =
-                soma / valores.length;
+        } else if (nivel < 40) {
 
+            tankState.textContent =
+                "Baixo";
 
-            const maximo =
-                Math.max(...valores);
+        } else if (nivel < 70) {
 
+            tankState.textContent =
+                "Normal";
 
-            const minimo =
-                Math.min(...valores);
+        } else if (nivel < 100) {
 
+            tankState.textContent =
+                "Alto";
 
-            mediaElemento.textContent =
-                media.toFixed(1) + "%";
+        } else {
 
-
-            maximoElemento.textContent =
-                maximo.toFixed(0) + "%";
-
-
-            minimoElemento.textContent =
-                minimo.toFixed(0) + "%";
-
+            tankState.textContent =
+                "Cheio";
         }
 
 
-        /* =========================
-           TENDÊNCIA
-        ========================= */
+        /* ============================
+           CÍRCULO
+        ============================ */
 
-        function atualizarTendencia() {
+        const graus =
+            nivel * 3.6;
 
-            if (historico.length < 3) {
-
-                trendValue.textContent =
-                    "Aguardando dados";
-
-                trendDescription.textContent =
-                    "São necessárias algumas medições para calcular a tendência.";
-
-                trendIcon.textContent =
-                    "→";
-
-                return;
-
-            }
+        levelCircle.style.setProperty(
+            "--progress",
+            graus + "deg"
+        );
 
 
-            const ultimas =
-                historico.slice(-5);
+        /* ============================
+           CLASSIFICAÇÃO
+        ============================ */
 
-
-            const primeira =
-                ultimas[0].nivel;
-
-
-            const ultima =
-                ultimas[ultimas.length - 1].nivel;
-
-
-            const diferenca =
-                ultima - primeira;
-
-
-            const limite =
-                1;
-
-
-            if (diferenca > limite) {
-
-                trendIcon.textContent =
-                    "↑";
-
-                trendValue.textContent =
-                    "Tendência de crescimento";
-
-                trendDescription.textContent =
-                    "O nível está aumentando nas últimas leituras.";
-
-            }
-
-            else if (diferenca < -limite) {
-
-                trendIcon.textContent =
-                    "↓";
-
-                trendValue.textContent =
-                    "Tendência de diminuição";
-
-                trendDescription.textContent =
-                    "O nível está diminuindo nas últimas leituras.";
-
-            }
-
-            else {
-
-                trendIcon.textContent =
-                    "→";
-
-                trendValue.textContent =
-                    "Nível estável";
-
-                trendDescription.textContent =
-                    "As últimas leituras apresentam pouca variação.";
-
-            }
-
-        }
-
-
-        /* =========================
-           ALERTA
-        ========================= */
-
-        function verificarAlerta(
-            classificacao,
-            nivel
+        if (
+            mudou ||
+            classificacao !== ultimaClassificacao
         ) {
+
+            classificacaoElemento.textContent =
+                classificacao;
+
+            classificacaoElemento.className =
+                "classification-badge";
+
 
             const texto =
                 classificacao.toLowerCase();
 
 
-            const critico =
-                texto.includes("alto") ||
-                texto.includes("crítico") ||
-                texto.includes("critico");
+            if (
+                texto.includes("medio") ||
+                texto.includes("médio")
+            ) {
 
-
-            if (critico) {
-
-                criticalAlert.classList.add(
-                    "active"
+                classificacaoElemento.classList.add(
+                    "medium"
                 );
 
+            } else if (
+                texto.includes("alto")
+            ) {
 
-                criticalMessage.textContent =
-                    "A classificação atual é " +
-                    classificacao +
-                    " com nível de " +
-                    nivel.toFixed(0) +
-                    "%. Verifique o reservatório.";
-
-            }
-
-            else {
-
-                criticalAlert.classList.remove(
-                    "active"
+                classificacaoElemento.classList.add(
+                    "high"
                 );
-
             }
 
+
+            verificarAlerta(
+                classificacao,
+                nivel
+            );
         }
 
 
-        /* =========================
-           GRÁFICO
-        ========================= */
+        /* ============================
+           HORÁRIO
+        ============================ */
 
-        function desenharGrafico() {
+        if (
+            horario !== ultimoHorario
+        ) {
 
-            const largura =
-                canvas.clientWidth;
+            horarioElemento.textContent =
+                horario;
 
-            const altura =
-                canvas.clientHeight;
-
-
-            const escala =
-                window.devicePixelRatio || 1;
-
-
-            canvas.width =
-                largura * escala;
+            ultimoHorario =
+                horario;
+        }
 
 
-            canvas.height =
-                altura * escala;
+        /* ============================
+           STATUS
+        ============================ */
+
+        connection.classList.add(
+            "online"
+        );
+
+        connectionText.textContent =
+            "Servidor conectado";
+
+        statusSistema.textContent =
+            "Sistema online";
 
 
-            ctx.setTransform(
-                escala,
-                0,
-                0,
-                escala,
-                0,
-                0
-            );
+    } catch (erro) {
+
+        console.error(erro);
+
+        connection.classList.remove(
+            "online"
+        );
+
+        connectionText.textContent =
+            "Servidor desconectado";
+
+        statusSistema.textContent =
+            "Servidor indisponível";
 
 
-            ctx.clearRect(
-                0,
-                0,
-                largura,
-                altura
-            );
+    } finally {
+
+        requisicaoEmAndamento =
+            false;
+    }
+}
 
 
-            if (historico.length === 0) {
+/* ================================
+   ESTATÍSTICAS
+================================ */
 
-                emptyChart.style.display =
-                    "flex";
+function atualizarEstatisticas() {
 
-                return;
-
-            }
-
-
-            emptyChart.style.display =
-                "none";
-
-
-            const margemEsquerda =
-                45;
-
-            const margemDireita =
-                20;
-
-            const margemSuperior =
-                20;
-
-            const margemInferior =
-                35;
+    if (
+        historico.length === 0
+    ) {
+        return;
+    }
 
 
-            const graficoLargura =
-                largura -
-                margemEsquerda -
-                margemDireita;
+    const valores =
+        historico.map(
+            item => item.nivel
+        );
 
 
-            const graficoAltura =
-                altura -
-                margemSuperior -
-                margemInferior;
+    let soma = 0;
+
+    let maximo =
+        valores[0];
+
+    let minimo =
+        valores[0];
 
 
-            /* =========================
-               LINHAS DE FUNDO
-            ========================= */
+    for (
+        const valor of valores
+    ) {
 
-            ctx.strokeStyle =
-                "rgba(255,255,255,0.07)";
-
-            ctx.lineWidth = 1;
+        soma += valor;
 
 
-            for (
-                let porcentagem = 0;
-                porcentagem <= 100;
-                porcentagem += 25
+        if (
+            valor > maximo
+        ) {
+            maximo = valor;
+        }
+
+
+        if (
+            valor < minimo
+        ) {
+            minimo = valor;
+        }
+    }
+
+
+    const media =
+        soma / valores.length;
+
+
+    mediaElemento.textContent =
+        media.toFixed(1) + "%";
+
+
+    maximoElemento.textContent =
+        maximo.toFixed(0) + "%";
+
+
+    minimoElemento.textContent =
+        minimo.toFixed(0) + "%";
+}
+
+
+/* ================================
+   TENDÊNCIA
+================================ */
+
+function atualizarTendencia() {
+
+    if (
+        historico.length < 3
+    ) {
+
+        trendValue.textContent =
+            "Aguardando dados";
+
+        trendDescription.textContent =
+            "São necessárias algumas medições para calcular a tendência.";
+
+        trendIcon.textContent =
+            "→";
+
+        return;
+    }
+
+
+    const ultimas =
+        historico.slice(-5);
+
+
+    const primeira =
+        ultimas[0].nivel;
+
+
+    const ultima =
+        ultimas[
+            ultimas.length - 1
+        ].nivel;
+
+
+    const diferenca =
+        ultima - primeira;
+
+
+    const limite = 1;
+
+
+    if (
+        diferenca > limite
+    ) {
+
+        trendIcon.textContent =
+            "↑";
+
+        trendValue.textContent =
+            "Tendência de crescimento";
+
+        trendDescription.textContent =
+            "O nível está aumentando nas últimas leituras.";
+
+    } else if (
+        diferenca < -limite
+    ) {
+
+        trendIcon.textContent =
+            "↓";
+
+        trendValue.textContent =
+            "Tendência de diminuição";
+
+        trendDescription.textContent =
+            "O nível está diminuindo nas últimas leituras.";
+
+    } else {
+
+        trendIcon.textContent =
+            "→";
+
+        trendValue.textContent =
+            "Nível estável";
+
+        trendDescription.textContent =
+            "As últimas leituras apresentam pouca variação.";
+    }
+}
+
+
+/* ================================
+   ALERTA
+================================ */
+
+function verificarAlerta(
+    classificacao,
+    nivel
+) {
+
+    const texto =
+        classificacao.toLowerCase();
+
+
+    const critico =
+        texto.includes("alto") ||
+        texto.includes("crítico") ||
+        texto.includes("critico");
+
+
+    if (critico) {
+
+        criticalAlert.classList.add(
+            "active"
+        );
+
+
+        criticalMessage.textContent =
+            "A classificação atual é " +
+            classificacao +
+            " com nível de " +
+            nivel.toFixed(0) +
+            "%. Verifique o reservatório.";
+
+    } else {
+
+        criticalAlert.classList.remove(
+            "active"
+        );
+    }
+}
+
+
+/* ================================
+   PREPARAR CANVAS
+================================ */
+
+function prepararCanvas() {
+
+    const largura =
+        canvas.clientWidth;
+
+    const altura =
+        canvas.clientHeight;
+
+    const escala =
+        window.devicePixelRatio || 1;
+
+
+    if (
+        largura === ultimoLargura &&
+        altura === ultimaAltura &&
+        escala === ultimoDpr
+    ) {
+        return;
+    }
+
+
+    canvas.width =
+        largura * escala;
+
+    canvas.height =
+        altura * escala;
+
+
+    ctx.setTransform(
+        escala,
+        0,
+        0,
+        escala,
+        0,
+        0
+    );
+
+
+    ultimoLargura =
+        largura;
+
+    ultimaAltura =
+        altura;
+
+    ultimoDpr =
+        escala;
+}
+
+
+/* ================================
+   DESENHAR GRÁFICO
+================================ */
+
+function desenharGrafico() {
+
+    prepararCanvas();
+
+
+    const largura =
+        canvas.clientWidth;
+
+    const altura =
+        canvas.clientHeight;
+
+
+    ctx.clearRect(
+        0,
+        0,
+        largura,
+        altura
+    );
+
+
+    if (
+        historico.length === 0
+    ) {
+
+        emptyChart.style.display =
+            "flex";
+
+        return;
+    }
+
+
+    emptyChart.style.display =
+        "none";
+
+
+    const margemEsquerda = 45;
+
+    const margemDireita = 20;
+
+    const margemSuperior = 20;
+
+    const margemInferior = 35;
+
+
+    const graficoLargura =
+        largura -
+        margemEsquerda -
+        margemDireita;
+
+
+    const graficoAltura =
+        altura -
+        margemSuperior -
+        margemInferior;
+
+
+    /* ============================
+       GRADE
+    ============================ */
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.07)";
+
+    ctx.lineWidth = 1;
+
+
+    for (
+        let porcentagem = 0;
+        porcentagem <= 100;
+        porcentagem += 25
+    ) {
+
+        const y =
+            margemSuperior +
+            graficoAltura -
+            (
+                porcentagem / 100
+            ) *
+            graficoAltura;
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+            margemEsquerda,
+            y
+        );
+
+
+        ctx.lineTo(
+            largura -
+            margemDireita,
+            y
+        );
+
+
+        ctx.stroke();
+
+
+        ctx.fillStyle =
+            "#637b91";
+
+        ctx.font =
+            "11px Arial";
+
+
+        ctx.fillText(
+            porcentagem + "%",
+            5,
+            y + 4
+        );
+    }
+
+
+    /* ============================
+       LINHA
+    ============================ */
+
+    ctx.beginPath();
+
+
+    historico.forEach(
+        (item, index) => {
+
+            const x =
+                margemEsquerda +
+                (
+                    index /
+                    Math.max(
+                        historico.length - 1,
+                        1
+                    )
+                ) *
+                graficoLargura;
+
+
+            const valor =
+                Math.min(
+                    Math.max(
+                        item.nivel,
+                        0
+                    ),
+                    100
+                );
+
+
+            const y =
+                margemSuperior +
+                graficoAltura -
+                (
+                    valor / 100
+                ) *
+                graficoAltura;
+
+
+            if (
+                index === 0
             ) {
 
-                const y =
-                    margemSuperior +
-                    graficoAltura -
-                    (porcentagem / 100) *
-                    graficoAltura;
-
-
-                ctx.beginPath();
-
                 ctx.moveTo(
-                    margemEsquerda,
+                    x,
                     y
                 );
+
+            } else {
 
                 ctx.lineTo(
-                    largura - margemDireita,
+                    x,
                     y
                 );
+            }
+        }
+    );
 
-                ctx.stroke();
+
+    ctx.strokeStyle =
+        "#00bfff";
+
+    ctx.lineWidth = 3;
+
+    ctx.lineJoin =
+        "round";
+
+    ctx.lineCap =
+        "round";
 
 
-                ctx.fillStyle =
-                    "#637b91";
+    ctx.stroke();
 
-                ctx.font =
-                    "11px Arial";
 
-                ctx.fillText(
-                    porcentagem + "%",
-                    5,
-                    y + 4
+    /* ============================
+       PONTOS
+    ============================ */
+
+    historico.forEach(
+        (item, index) => {
+
+            const x =
+                margemEsquerda +
+                (
+                    index /
+                    Math.max(
+                        historico.length - 1,
+                        1
+                    )
+                ) *
+                graficoLargura;
+
+
+            const valor =
+                Math.min(
+                    Math.max(
+                        item.nivel,
+                        0
+                    ),
+                    100
                 );
 
-            }
 
+            const y =
+                margemSuperior +
+                graficoAltura -
+                (
+                    valor / 100
+                ) *
+                graficoAltura;
 
-            /* =========================
-               LINHA DO GRÁFICO
-            ========================= */
 
             ctx.beginPath();
 
 
-            historico.forEach(
-                (item, index) => {
-
-                    const x =
-                        margemEsquerda +
-                        (
-                            index /
-                            Math.max(
-                                historico.length - 1,
-                                1
-                            )
-                        ) *
-                        graficoLargura;
-
-
-                    const valor =
-                        Math.min(
-                            Math.max(
-                                item.nivel,
-                                0
-                            ),
-                            100
-                        );
-
-
-                    const y =
-                        margemSuperior +
-                        graficoAltura -
-                        (valor / 100) *
-                        graficoAltura;
-
-
-                    if (index === 0) {
-
-                        ctx.moveTo(
-                            x,
-                            y
-                        );
-
-                    }
-
-                    else {
-
-                        ctx.lineTo(
-                            x,
-                            y
-                        );
-
-                    }
-
-                }
+            ctx.arc(
+                x,
+                y,
+                4,
+                0,
+                Math.PI * 2
             );
 
-
-            ctx.strokeStyle =
-                "#00bfff";
-
-            ctx.lineWidth = 3;
-
-            ctx.lineJoin =
-                "round";
-
-            ctx.lineCap =
-                "round";
-
-            ctx.stroke();
-
-
-            /* =========================
-               PONTOS
-            ========================= */
-
-            historico.forEach(
-                (item, index) => {
-
-                    const x =
-                        margemEsquerda +
-                        (
-                            index /
-                            Math.max(
-                                historico.length - 1,
-                                1
-                            )
-                        ) *
-                        graficoLargura;
-
-
-                    const valor =
-                        Math.min(
-                            Math.max(
-                                item.nivel,
-                                0
-                            ),
-                            100
-                        );
-
-
-                    const y =
-                        margemSuperior +
-                        graficoAltura -
-                        (valor / 100) *
-                        graficoAltura;
-
-
-                    ctx.beginPath();
-
-                    ctx.arc(
-                        x,
-                        y,
-                        4,
-                        0,
-                        Math.PI * 2
-                    );
-
-
-                    ctx.fillStyle =
-                        "#6edcff";
-
-                    ctx.fill();
-
-
-                }
-            );
-
-
-            /* =========================
-               HORÁRIOS
-            ========================= */
 
             ctx.fillStyle =
-                "#637b91";
-
-            ctx.font =
-                "10px Arial";
+                "#6edcff";
 
 
-            const quantidadeLabels =
-                Math.min(
-                    historico.length,
-                    6
-                );
-
-
-            for (
-                let i = 0;
-                i < quantidadeLabels;
-                i++
-            ) {
-
-                const indice =
-                    Math.floor(
-                        (
-                            i /
-                            Math.max(
-                                quantidadeLabels - 1,
-                                1
-                            )
-                        ) *
-                        (historico.length - 1)
-                    );
-
-
-                const item =
-                    historico[indice];
-
-
-                const x =
-                    margemEsquerda +
-                    (
-                        indice /
-                        Math.max(
-                            historico.length - 1,
-                            1
-                        )
-                    ) *
-                    graficoLargura;
-
-
-                ctx.fillText(
-                    item.horario,
-                    x - 15,
-                    altura - 10
-                );
-
-            }
-
+            ctx.fill();
         }
+    );
 
 
-        /* =========================
-           REDIMENSIONAMENTO
-        ========================= */
+    /* ============================
+       HORÁRIOS
+    ============================ */
 
-        window.addEventListener(
-            "resize",
-            desenharGrafico
+    ctx.fillStyle =
+        "#637b91";
+
+    ctx.font =
+        "10px Arial";
+
+
+    const quantidadeLabels =
+        Math.min(
+            historico.length,
+            6
         );
 
 
-        /* =========================
-           INICIALIZAÇÃO
-        ========================= */
+    for (
+        let i = 0;
+        i < quantidadeLabels;
+        i++
+    ) {
 
-        atualizarDados();
+        const indice =
+            Math.floor(
+                (
+                    i /
+                    Math.max(
+                        quantidadeLabels - 1,
+                        1
+                    )
+                ) *
+                (
+                    historico.length - 1
+                )
+            );
 
 
-        /* =========================
-           ATUALIZAÇÃO
-        ========================= */
+        const item =
+            historico[indice];
 
-        setInterval(
-            atualizarDados,
-            2000
+
+        const x =
+            margemEsquerda +
+            (
+                indice /
+                Math.max(
+                    historico.length - 1,
+                    1
+                )
+            ) *
+            graficoLargura;
+
+
+        ctx.fillText(
+            item.horario,
+            x - 15,
+            altura - 10
         );
+    }
+}
 
-    </script>
+
+/* ================================
+   LOOP DO GRÁFICO
+================================ */
+
+function loopGrafico(tempo) {
+
+    if (
+        tempo - ultimoDesenho >=
+        intervaloGrafico
+    ) {
+
+        desenharGrafico();
+
+        ultimoDesenho =
+            tempo;
+    }
+
+
+    requestAnimationFrame(
+        loopGrafico
+    );
+}
+
+
+/* ================================
+   RESIZE
+================================ */
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        ultimoLargura = 0;
+
+        ultimaAltura = 0;
+
+        desenharGrafico();
+    }
+);
+
+
+/* ================================
+   INICIAR SISTEMA
+================================ */
+
+atualizarDados();
+
+
+setInterval(
+    atualizarDados,
+    intervaloConsulta
+);
+
+
+requestAnimationFrame(
+    loopGrafico
+);
+
+</script>
 
 </body>
-
 </html>

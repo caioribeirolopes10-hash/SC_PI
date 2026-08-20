@@ -12,11 +12,7 @@ app.get('/', (req, res) => {
 });
 
 // Último resultado recebido do C#.
-let dadosAgua = {
-    nivel: 0,
-    classificacao: "Aguardando",
-    horario: null
-};
+let dadosAgua = {nivel: 0,classificacao: "Aguardando", horario: null};
 
 // LOGIN
 app.post('/login', (req, res) => {
