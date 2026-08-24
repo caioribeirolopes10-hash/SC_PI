@@ -4,7 +4,6 @@ canal do youtube https://www.youtube.com/watch?v=P-pRt--UP48
 # 💧 Projeto Integrado — Monitoramento do Nível de Água
 
 **INTEGRANTES:** Caio Lopes e Evelyn Dandarah
-**LINK DO VÍDEO:**
 
 Projeto desenvolvido como parte do **Projeto Integrado**, com o objetivo de desenvolver um sistema completo de **aquisição, processamento, classificação e visualização de dados**.
 
