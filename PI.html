@@ -375,7 +375,7 @@ header {
 .statistics {
     margin-top: 25px;
     display: grid;
-    grid-template-columns: repeat(4,1fr);
+    grid-template-columns: repeat(3,1fr);
     gap: 20px;
 }
 
@@ -971,25 +971,6 @@ footer {
 
 </div>
 
-<div class="stat-card">
-
-    <div class="stat-title">
-        ADC
-    </div>
-
-    <div
-        class="stat-value"
-        id="adc"
-    >
-        0
-    </div>
-
-    <div class="stat-description">
-        Valor lido pelo ADC do trimpot
-    </div>
-
-</div>
-
 </section>
 
 <section class="card trend-card">
@@ -1135,10 +1116,6 @@ footer {
 
 <script>
 
-/* ================================
-   ELEMENTOS
-================================ */
-
 const nivelElemento =
     document.getElementById("nivel");
 
@@ -1178,9 +1155,6 @@ const maximoElemento =
 const minimoElemento =
     document.getElementById("minimo");
 
-const adcElemento =
-    document.getElementById("adc");
-
 const trendIcon =
     document.getElementById("trendIcon");
 
@@ -1205,11 +1179,6 @@ const canvas =
 const ctx =
     canvas.getContext("2d");
 
-
-/* ================================
-   CONFIGURAÇÕES
-================================ */
-
 const historico = [];
 
 const maxLeituras = 30;
@@ -1217,11 +1186,6 @@ const maxLeituras = 30;
 const intervaloConsulta = 200;
 
 const intervaloGrafico = 500;
-
-
-/* ================================
-   CONTROLE
-================================ */
 
 let requisicaoEmAndamento = false;
 
@@ -1239,13 +1203,11 @@ let ultimaAltura = 0;
 
 let ultimoDpr = 0;
 
-
-/* ================================
-   BUSCAR DADOS
-================================ */
-
 async function atualizarDados() {
 
+    /*
+     * Impede várias requisições simultâneas.
+     */
     if (requisicaoEmAndamento) {
         return;
     }
@@ -1270,26 +1232,6 @@ async function atualizarDados() {
         const dados =
             await resposta.json();
 
-
-        /* ============================
-           ADC
-        ============================ */
-
-        let valorADC =
-            Number(dados.valor_adc);
-
-        if (!Number.isFinite(valorADC)) {
-            valorADC = 0;
-        }
-
-        adcElemento.textContent =
-            valorADC.toFixed(0);
-
-
-        /* ============================
-           NÍVEL
-        ============================ */
-
         let nivel =
             Number(dados.nivel);
 
@@ -1313,28 +1255,13 @@ async function atualizarDados() {
             dados.horario ||
             "--";
 
-
-        /* ============================
-           DETECTAR MUDANÇA
-        ============================ */
-
         const mudou =
             ultimoNivel === null ||
             nivel !== ultimoNivel ||
             classificacao !== ultimaClassificacao;
 
-
-        /* ============================
-           NÚMERO DO NÍVEL
-        ============================ */
-
         nivelElemento.textContent =
             nivel.toFixed(0);
-
-
-        /* ============================
-           HISTÓRICO
-        ============================ */
 
         if (mudou) {
 
@@ -1377,12 +1304,6 @@ async function atualizarDados() {
             ultimaClassificacao =
                 classificacao;
         }
-
-
-        /* ============================
-           TANQUE
-        ============================ */
-
         tankWater.style.height =
             nivel + "%";
 
@@ -1416,11 +1337,6 @@ async function atualizarDados() {
                 "Cheio";
         }
 
-
-        /* ============================
-           CÍRCULO
-        ============================ */
-
         const graus =
             nivel * 3.6;
 
@@ -1428,11 +1344,6 @@ async function atualizarDados() {
             "--progress",
             graus + "deg"
         );
-
-
-        /* ============================
-           CLASSIFICAÇÃO
-        ============================ */
 
         if (
             mudou ||
@@ -1475,11 +1386,6 @@ async function atualizarDados() {
             );
         }
 
-
-        /* ============================
-           HORÁRIO
-        ============================ */
-
         if (
             horario !== ultimoHorario
         ) {
@@ -1490,11 +1396,6 @@ async function atualizarDados() {
             ultimoHorario =
                 horario;
         }
-
-
-        /* ============================
-           STATUS
-        ============================ */
 
         connection.classList.add(
             "online"
@@ -1528,11 +1429,6 @@ async function atualizarDados() {
             false;
     }
 }
-
-
-/* ================================
-   ESTATÍSTICAS
-================================ */
 
 function atualizarEstatisticas() {
 
@@ -1595,12 +1491,6 @@ function atualizarEstatisticas() {
     minimoElemento.textContent =
         minimo.toFixed(0) + "%";
 }
-
-
-/* ================================
-   TENDÊNCIA
-================================ */
-
 function atualizarTendencia() {
 
     if (
@@ -1680,11 +1570,6 @@ function atualizarTendencia() {
     }
 }
 
-
-/* ================================
-   ALERTA
-================================ */
-
 function verificarAlerta(
     classificacao,
     nivel
@@ -1722,11 +1607,6 @@ function verificarAlerta(
     }
 }
 
-
-/* ================================
-   PREPARAR CANVAS
-================================ */
-
 function prepararCanvas() {
 
     const largura =
@@ -1737,7 +1617,6 @@ function prepararCanvas() {
 
     const escala =
         window.devicePixelRatio || 1;
-
 
     if (
         largura === ultimoLargura &&
@@ -1774,11 +1653,6 @@ function prepararCanvas() {
     ultimoDpr =
         escala;
 }
-
-
-/* ================================
-   DESENHAR GRÁFICO
-================================ */
 
 function desenharGrafico() {
 
@@ -1835,11 +1709,6 @@ function desenharGrafico() {
         margemSuperior -
         margemInferior;
 
-
-    /* ============================
-       GRADE
-    ============================ */
-
     ctx.strokeStyle =
         "rgba(255,255,255,0.07)";
 
@@ -1893,11 +1762,6 @@ function desenharGrafico() {
             y + 4
         );
     }
-
-
-    /* ============================
-       LINHA
-    ============================ */
 
     ctx.beginPath();
 
@@ -1970,11 +1834,6 @@ function desenharGrafico() {
 
     ctx.stroke();
 
-
-    /* ============================
-       PONTOS
-    ============================ */
-
     historico.forEach(
         (item, index) => {
 
@@ -2028,11 +1887,6 @@ function desenharGrafico() {
             ctx.fill();
         }
     );
-
-
-    /* ============================
-       HORÁRIOS
-    ============================ */
 
     ctx.fillStyle =
         "#637b91";
@@ -2093,11 +1947,6 @@ function desenharGrafico() {
     }
 }
 
-
-/* ================================
-   LOOP DO GRÁFICO
-================================ */
-
 function loopGrafico(tempo) {
 
     if (
@@ -2111,16 +1960,10 @@ function loopGrafico(tempo) {
             tempo;
     }
 
-
     requestAnimationFrame(
         loopGrafico
     );
 }
-
-
-/* ================================
-   RESIZE
-================================ */
 
 window.addEventListener(
     "resize",
@@ -2133,21 +1976,12 @@ window.addEventListener(
         desenharGrafico();
     }
 );
-
-
-/* ================================
-   INICIAR SISTEMA
-================================ */
-
 atualizarDados();
-
 
 setInterval(
     atualizarDados,
     intervaloConsulta
 );
-
-
 requestAnimationFrame(
     loopGrafico
 );
